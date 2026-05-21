@@ -1,9 +1,10 @@
-{
+json{
   "version": 2,
   "buildCommand": "",
   "outputDirectory": "public",
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/admin", "dest": "/public/admin.html" },
     { "src": "/(.*)", "dest": "/public/index.html" }
   ]
 }
