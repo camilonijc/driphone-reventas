@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dr.iPhone — Catálogo Reventas</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#27500A;--green-light:#EAF3DE;--green-mid:#3B6D11;
+  --text:#1a1a1a;--text2:#555;--text3:#999;
+  --bg:#fff;--bg2:#f8f9fa;--bg3:#f1f3f5;
+  --border:#e0e0e0;--border2:#ccc;
+  --danger:#991B1B;--danger-bg:#FEE2E2;
+  --info:#185FA5;--info-bg:#E6F1FB;
+  --warn:#854F0B;--warn-bg:#FAEEDA;
+  --radius:10px;--radius-sm:6px;
+  --wa:#25D366;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg2);color:var(--text);min-height:100vh}
+.screen{display:none}
+.screen.active{display:block}
+
+/* ── LOGIN ── */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.login-card{background:var(--bg);border-radius:16px;border:1px solid var(--border);padding:2rem;width:100%;max-width:380px}
+.logo{font-size:26px;font-weight:700;letter-spacing:-0.5px;color:var(--text)}
+.logo span{color:var(--green-mid)}
+.login-sub{font-size:13px;color:var(--text3);margin-top:4px;margin-bottom:2rem}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:12px;color:var(--text2);font-weight:500;margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+.field input{width:100%;padding:11px 14px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:15px;background:var(--bg);color:var(--text);outline:none;transition:border .15s}
+.field input:focus{border-color:var(--green-mid)}
+.login-btn{width:100%;padding:13px;border-radius:var(--radius-sm);border:none;background:var(--green);color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:.5rem;transition:background .15s}
+.login-btn:hover{background:var(--green-mid)}
+.err{font-size:12px;color:var(--danger);margin-top:8px;display:none;align-items:center;gap:4px}
+.err.show{display:flex}
+
+/* ── SHELL ── */
+.app-shell{max-width:480px;margin:0 auto;background:var(--bg);min-height:100vh;position:relative;padding-bottom:80px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:10}
+.topbar-logo{font-size:20px;font-weight:700;color:var(--text)}
+.topbar-logo span{color:var(--green-mid)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.icon-btn{background:none;border:none;cursor:pointer;color:var(--text2);display:flex;align-items:center;position:relative;padding:4px}
+.icon-btn:hover{color:var(--text)}
+.icon-btn svg{width:22px;height:22px}
+.cart-badge{position:absolute;top:-2px;right:-2px;background:var(--danger);color:#fff;border-radius:50%;width:17px;height:17px;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)}
+
+/* ── BOTTOM NAV ── */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:var(--bg);border-top:1px solid var(--border);display:flex;z-index:20}
+.nav-btn{flex:1;padding:12px 0 10px;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;color:var(--text3);font-size:10px;font-weight:500;transition:color .15s}
+.nav-btn svg{width:22px;height:22px}
+.nav-btn.active{color:var(--green-mid)}
+
+/* ── CATALOG ── */
+.page-content{padding:14px 16px}
+.search-wrap{position:relative;margin-bottom:12px}
+.search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text3)}
+.search-wrap input{width:100%;padding:10px 12px 10px 34px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:var(--bg2);color:var(--text);outline:none}
+.search-wrap input:focus{border-color:var(--green-mid);background:var(--bg)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;margin-bottom:4px}
+.chips::-webkit-scrollbar{display:none}
+.chip{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:500;transition:all .15s;flex-shrink:0}
+.chip.active{background:var(--green);color:#fff;border-color:var(--green)}
+.products-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:12px}
+.product-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:13px;transition:border-color .15s;cursor:default}
+.product-card:hover{border-color:var(--border2)}
+.pc-model{font-size:13px;font-weight:600;color:var(--text);line-height:1.3}
+.pc-detail{font-size:11px;color:var(--text3);margin-top:2px;margin-bottom:7px}
+.pc-badge{display:inline-flex;align-items:center;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;margin-bottom:8px}
+.badge-exc{background:var(--green-light);color:var(--green-mid)}
+.badge-muy{background:var(--info-bg);color:var(--info)}
+.badge-bue{background:var(--warn-bg);color:var(--warn)}
+.pc-usd{font-size:16px;font-weight:700;color:var(--green)}
+.pc-ars{font-size:11px;color:var(--text3);margin-top:1px;margin-bottom:10px}
+.add-btn{width:100%;padding:7px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg2);font-size:12px;color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;font-weight:500;transition:all .15s}
+.add-btn:hover{border-color:var(--green-mid);color:var(--green-mid)}
+.add-btn.added{background:var(--green-light);border-color:var(--green-mid);color:var(--green-mid)}
+.qty-row{display:flex;align-items:center;justify-content:space-between}
+.qty-ctrl{display:flex;align-items:center;gap:6px}
+.qty-btn{width:26px;height:26px;border-radius:50%;border:1px solid var(--border2);background:var(--bg);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);line-height:1}
+.qty-num{font-size:13px;font-weight:600;min-width:18px;text-align:center;color:var(--text)}
+.in-cart-label{font-size:11px;color:var(--green-mid);font-weight:600;display:flex;align-items:center;gap:3px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green-mid);display:inline-block}
+.no-results{grid-column:1/-1;text-align:center;padding:3rem 1rem;color:var(--text3);font-size:14px}
+
+/* ── CART ── */
+.section-header{font-size:18px;font-weight:700;color:var(--text);margin-bottom:16px}
+.cart-empty{text-align:center;padding:4rem 1rem}
+.cart-empty svg{width:48px;height:48px;color:var(--border2);margin-bottom:12px}
+.cart-empty p{font-size:14px;color:var(--text3)}
+.cart-item{display:flex;align-items:flex-start;justify-content:space-between;padding:14px 0;border-bottom:1px solid var(--border)}
+.ci-info{flex:1}
+.ci-model{font-size:14px;font-weight:600;color:var(--text)}
+.ci-detail{font-size:12px;color:var(--text3);margin-top:2px}
+.ci-price{font-size:15px;font-weight:700;color:var(--green);text-align:right;margin-left:10px}
+.ci-sub{font-size:11px;color:var(--text3);text-align:right;margin-top:2px}
+.remove-btn{background:none;border:none;color:var(--text3);cursor:pointer;margin-left:8px;padding:2px;flex-shrink:0}
+.remove-btn:hover{color:var(--danger)}
+.cart-total-block{background:var(--bg2);border-radius:var(--radius);padding:14px;margin-top:16px}
+.total-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.total-label{font-size:13px;color:var(--text2)}
+.total-val{font-size:22px;font-weight:700;color:var(--text)}
+.total-ars{font-size:12px;color:var(--text3)}
+.wa-btn{width:100%;margin-top:14px;padding:15px;border-radius:var(--radius);border:none;background:var(--wa);color:#fff;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;transition:opacity .15s}
+.wa-btn:hover{opacity:.9}
+.wa-btn:disabled{opacity:.5;cursor:not-allowed}
+.cart-note{font-size:11px;color:var(--text3);text-align:center;margin-top:8px}
+
+/* ── CUENTA CORRIENTE ── */
+.cc-header{background:var(--green);border-radius:var(--radius);padding:18px;margin-bottom:16px;color:#fff}
+.cc-header-name{font-size:13px;opacity:.8;margin-bottom:4px}
+.cc-saldo-label{font-size:12px;opacity:.7;margin-bottom:2px}
+.cc-saldo{font-size:32px;font-weight:700;letter-spacing:-1px}
+.cc-saldo.positivo{color:#a8f0c0}
+.cc-saldo.negativo{color:#fca5a5}
+.cc-dir{font-size:12px;opacity:.8;margin-top:4px}
+.cc-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.cc-stat{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px}
+.cc-stat-label{font-size:11px;color:var(--text3);margin-bottom:3px}
+.cc-stat-val{font-size:16px;font-weight:700;color:var(--text)}
+.mov-list{}
+.mov-item{display:flex;align-items:flex-start;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border)}
+.mov-left{flex:1}
+.mov-concepto{font-size:14px;font-weight:500;color:var(--text)}
+.mov-fecha{font-size:11px;color:var(--text3);margin-top:2px}
+.mov-tipo{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;display:inline-block;margin-top:4px}
+.tipo-venta{background:var(--info-bg);color:var(--info)}
+.tipo-pago{background:var(--green-light);color:var(--green-mid)}
+.tipo-credito{background:var(--warn-bg);color:var(--warn)}
+.tipo-ajuste{background:var(--bg3);color:var(--text2)}
+.mov-monto{font-size:15px;font-weight:700;text-align:right}
+.mov-monto.debe{color:var(--danger)}
+.mov-monto.haber{color:var(--green-mid)}
+.loading{text-align:center;padding:3rem;color:var(--text3);font-size:14px}
+.spinner{display:inline-block;width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--green-mid);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:10px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.logout-btn{width:100%;padding:11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:none;color:var(--text3);font-size:13px;cursor:pointer;margin-top:1rem;transition:all .15s}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger)}
+.section-sep{height:1px;background:var(--border);margin:16px 0}
+.empty-state{text-align:center;padding:2rem;color:var(--text3);font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="login-page">
+    <div class="login-card">
+      <div class="logo">Dr.<span>iPhone</span></div>
+      <div class="login-sub">Portal exclusivo para reventas autorizados</div>
+      <div class="field">
+        <label>Tu código de acceso</label>
+        <input type="password" id="login-code" placeholder="Ej: REVENTA123" autocomplete="off"/>
+      </div>
+      <div id="login-err" class="err">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        Código incorrecto. Verificá con Dr.iPhone.
+      </div>
+      <button class="login-btn" id="login-btn" onclick="doLogin()">Entrar al catálogo</button>
+      <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:16px">¿No tenés código? Escribinos por WhatsApp</p>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="screen-app" class="screen">
+  <div class="app-shell">
+    <div class="topbar">
+      <div class="topbar-logo">Dr.<span>iPhone</span></div>
+      <div class="topbar-right">
+        <span style="font-size:12px;color:var(--text3)" id="topbar-name"></span>
+        <button class="icon-btn" onclick="showTab('cart')" aria-label="Carrito">
+          <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+          <span class="cart-badge" id="cart-badge" style="display:none">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- TAB: CATALOGO -->
+    <div id="tab-catalog" class="tab-content page-content">
+      <div class="search-wrap">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="search-input" placeholder="Buscar modelo, color..." oninput="renderGrid()"/>
+      </div>
+      <div class="chips" id="filter-chips"></div>
+      <div class="products-grid" id="product-grid">
+        <div class="no-results">
+          <div class="spinner"></div><br>Cargando catálogo...
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: CARRITO -->
+    <div id="tab-cart" class="tab-content page-content" style="display:none">
+      <div class="section-header">Tu pedido</div>
+      <div id="cart-content"></div>
+    </div>
+
+    <!-- TAB: CUENTA CORRIENTE -->
+    <div id="tab-cc" class="tab-content page-content" style="display:none">
+      <div id="cc-content">
+        <div class="loading"><div class="spinner"></div><br>Cargando cuenta...</div>
+      </div>
+    </div>
+
+    <!-- TAB: PERFIL -->
+    <div id="tab-perfil" class="tab-content page-content" style="display:none">
+      <div class="section-header">Mi cuenta</div>
+      <div style="background:var(--bg2);border-radius:var(--radius);padding:16px;margin-bottom:16px">
+        <div style="font-size:12px;color:var(--text3);margin-bottom:4px">Conectado como</div>
+        <div style="font-size:16px;font-weight:600" id="perfil-name"></div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px" id="perfil-code"></div>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+
+    <!-- BOTTOM NAV -->
+    <nav class="bottom-nav">
+      <button class="nav-btn active" id="nav-catalog" onclick="showTab('catalog')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="7" height="7"/><rect x="15" y="3" width="7" height="7"/><rect x="2" y="14" width="7" height="7"/><rect x="15" y="14" width="7" height="7"/></svg>
+        Catálogo
+      </button>
+      <button class="nav-btn" id="nav-cart" onclick="showTab('cart')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+        Pedido
+      </button>
+      <button class="nav-btn" id="nav-cc" onclick="showTab('cc')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+        Mi cuenta
+      </button>
+      <button class="nav-btn" id="nav-perfil" onclick="showTab('perfil')">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        Perfil
+      </button>
+    </nav>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────
+const WA_NUMBER  = "5492999000000"; // ← tu número con código de país, sin +
+const SHEET_ID   = "REEMPLAZAR_CON_TU_SHEET_ID"; // ← ID de tu Google Sheet
+const API_BASE   = "/api";          // Vercel serverless functions
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+let currentUser = null;
+let stock       = [];
+let cart        = {};
+let activeFilter = "Todos";
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────
+document.getElementById("login-code").addEventListener("keydown", e => {
+  if (e.key === "Enter") doLogin();
+});
+
+async function doLogin() {
+  const code = document.getElementById("login-code").value.trim().toUpperCase();
+  const btn  = document.getElementById("login-btn");
+  const err  = document.getElementById("login-err");
+  if (!code) return;
+
+  btn.textContent = "Verificando...";
+  btn.disabled = true;
+  err.classList.remove("show");
+
+  try {
+    const res  = await fetch(`${API_BASE}/auth?code=${encodeURIComponent(code)}`);
+    const data = await res.json();
+    if (data.ok) {
+      currentUser = data.user;
+      sessionStorage.setItem("dr_user", JSON.stringify(data.user));
+      showApp();
+    } else {
+      err.classList.add("show");
+    }
+  } catch(e) {
+    err.textContent = "Error de conexión. Intentá de nuevo.";
+    err.classList.add("show");
+  }
+  btn.textContent = "Entrar al catálogo";
+  btn.disabled = false;
+}
+
+function doLogout() {
+  sessionStorage.removeItem("dr_user");
+  currentUser = null; cart = {}; stock = [];
+  document.getElementById("screen-app").classList.remove("active");
+  document.getElementById("screen-login").classList.add("active");
+  document.getElementById("login-code").value = "";
+}
+
+function showApp() {
+  document.getElementById("screen-login").classList.remove("active");
+  document.getElementById("screen-app").classList.add("active");
+  document.getElementById("topbar-name").textContent = currentUser.nombre;
+  document.getElementById("perfil-name").textContent = currentUser.nombre;
+  document.getElementById("perfil-code").textContent = "Código: " + currentUser.codigo;
+  loadStock();
+}
+
+// ── TABS ──────────────────────────────────────────────────────────────────
+function showTab(tab) {
+  ["catalog","cart","cc","perfil"].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = t === tab ? "block" : "none";
+    const nb = document.getElementById(`nav-${t}`);
+    if (nb) nb.classList.toggle("active", t === tab);
+  });
+  if (tab === "cc") loadCC();
+  if (tab === "cart") renderCart();
+}
+
+// ── STOCK / CATALOG ───────────────────────────────────────────────────────
+async function loadStock() {
+  try {
+    const res  = await fetch(`${API_BASE}/stock`);
+    const data = await res.json();
+    stock = data.items || [];
+  } catch(e) {
+    stock = FALLBACK_STOCK;
+  }
+  buildFilters();
+  renderGrid();
+}
+
+function buildFilters() {
+  const models = ["Todos", ...new Set(stock.map(p => p.modelo.split(" ").slice(0,2).join(" ")))];
+  document.getElementById("filter-chips").innerHTML = models.map(m =>
+    `<button class="chip${m===activeFilter?' active':''}" onclick="setFilter('${m}')">${m}</button>`
+  ).join("");
+}
+
+function setFilter(f) {
+  activeFilter = f;
+  buildFilters();
+  renderGrid();
+}
+
+function estadoClass(e) {
+  if (e === "Excelente") return "badge-exc";
+  if (e === "Muy bueno") return "badge-muy";
+  return "badge-bue";
+}
+
+function renderGrid() {
+  const q = (document.getElementById("search-input").value || "").toLowerCase();
+  const items = stock.filter(p => {
+    const matchF = activeFilter === "Todos" || p.modelo.toLowerCase().startsWith(activeFilter.toLowerCase());
+    const matchS = !q || (p.modelo+" "+p.color+" "+p.capacidad).toLowerCase().includes(q);
+    return matchF && matchS;
+  });
+
+  const cot = stock[0]?.cotizacion || 1455;
+  const grid = document.getElementById("product-grid");
+
+  if (!items.length) {
+    grid.innerHTML = `<div class="no-results">Sin resultados para tu búsqueda</div>`;
+    return;
+  }
+
+  grid.innerHTML = items.map(p => {
+    const qty = cart[p.id] || 0;
+    const ars = Math.round(p.precio_usd * cot).toLocaleString("es-AR");
+    return `<div class="product-card">
+      <div class="pc-model">${p.modelo}</div>
+      <div class="pc-detail">${p.capacidad} · ${p.color}</div>
+      <span class="pc-badge ${estadoClass(p.estado)}">${p.estado}</span>
+      <div class="pc-usd">U$S ${p.precio_usd.toLocaleString()}</div>
+      <div class="pc-ars">≈ $${ars}</div>
+      ${qty === 0
+        ? `<button class="add-btn" onclick="addToCart('${p.id}')">
+             <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+             Agregar
+           </button>`
+        : `<div class="qty-row">
+             <span class="in-cart-label"><span class="dot"></span>En pedido</span>
+             <div class="qty-ctrl">
+               <button class="qty-btn" onclick="changeQty('${p.id}',-1)">−</button>
+               <span class="qty-num">${qty}</span>
+               <button class="qty-btn" onclick="changeQty('${p.id}',1)">+</button>
+             </div>
+           </div>`
+      }
+    </div>`;
+  }).join("");
+}
+
+function addToCart(id) {
+  cart[id] = (cart[id] || 0) + 1;
+  updateCartBadge();
+  renderGrid();
+}
+
+function changeQty(id, delta) {
+  cart[id] = (cart[id] || 0) + delta;
+  if (cart[id] <= 0) delete cart[id];
+  updateCartBadge();
+  renderGrid();
+}
+
+function updateCartBadge() {
+  const total = Object.values(cart).reduce((a,b) => a+b, 0);
+  const badge = document.getElementById("cart-badge");
+  badge.textContent = total;
+  badge.style.display = total > 0 ? "flex" : "none";
+}
+
+// ── CART ──────────────────────────────────────────────────────────────────
+function renderCart() {
+  const ids = Object.keys(cart);
+  const cot = stock[0]?.cotizacion || 1455;
+  const wrap = document.getElementById("cart-content");
+
+  if (!ids.length) {
+    wrap.innerHTML = `<div class="cart-empty">
+      <svg fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" style="display:block;margin:0 auto 12px"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 01-8 0"/></svg>
+      <p>Todavía no agregaste productos</p>
+    </div>`;
+    return;
+  }
+
+  let totalUSD = 0;
+  const itemsHTML = ids.map(id => {
+    const p   = stock.find(x => x.id == id);
+    if (!p) return "";
+    const qty = cart[id];
+    const sub = p.precio_usd * qty;
+    totalUSD += sub;
+    return `<div class="cart-item">
+      <div class="ci-info">
+        <div class="ci-model">${p.modelo} ${p.capacidad}</div>
+        <div class="ci-detail">${p.color} · ${p.estado}${qty > 1 ? ` × ${qty}` : ""}</div>
+      </div>
+      <div>
+        <div class="ci-price">U$S ${sub.toLocaleString()}</div>
+        ${qty > 1 ? `<div class="ci-sub">U$S ${p.precio_usd} c/u</div>` : ""}
+      </div>
+      <button class="remove-btn" onclick="changeQty('${id}',-${qty});renderCart();" aria-label="Quitar">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+      </button>
+    </div>`;
+  }).join("");
+
+  const totalARS = Math.round(totalUSD * cot).toLocaleString("es-AR");
+  wrap.innerHTML = `
+    ${itemsHTML}
+    <div class="cart-total-block">
+      <div class="total-row">
+        <span class="total-label">Total estimado</span>
+        <div>
+          <div class="total-val">U$S ${totalUSD.toLocaleString()}</div>
+          <div class="total-ars">≈ $${totalARS} (cot. $${cot})</div>
+        </div>
+      </div>
+    </div>
+    <button class="wa-btn" onclick="sendWhatsApp()">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      Enviar pedido por WhatsApp
+    </button>
+    <p class="cart-note">Tu pedido llegará a Dr.iPhone para confirmación</p>`;
+}
+
+function sendWhatsApp() {
+  const ids = Object.keys(cart);
+  if (!ids.length) return;
+  const cot = stock[0]?.cotizacion || 1455;
+  let msg = `Hola Dr.iPhone! 👋 Soy *${currentUser.nombre}*\n\nQuiero hacer el siguiente pedido:\n\n`;
+  let total = 0;
+  ids.forEach(id => {
+    const p = stock.find(x => x.id == id);
+    if (!p) return;
+    const qty = cart[id];
+    const sub = p.precio_usd * qty;
+    total += sub;
+    msg += `• ${p.modelo} ${p.capacidad} ${p.color} (${p.estado})${qty > 1 ? ` ×${qty}` : ""} — U$S ${sub.toLocaleString()}\n`;
+  });
+  msg += `\n*Total: U$S ${total.toLocaleString()}*\nCotización referencia: $${cot}/USD\n\n¡Quedo a la espera de confirmación!`;
+  window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, "_blank");
+}
+
+// ── CUENTA CORRIENTE ──────────────────────────────────────────────────────
+async function loadCC() {
+  const wrap = document.getElementById("cc-content");
+  wrap.innerHTML = `<div class="loading"><div class="spinner"></div><br>Cargando cuenta...</div>`;
+  try {
+    const res  = await fetch(`${API_BASE}/cc?codigo=${encodeURIComponent(currentUser.codigo)}`);
+    const data = await res.json();
+    renderCC(data);
+  } catch(e) {
+    renderCC(FALLBACK_CC);
+  }
+}
+
+function renderCC(data) {
+  const wrap   = document.getElementById("cc-content");
+  const saldo  = data.saldo || 0;
+  const signo  = saldo >= 0 ? "+" : "";
+  const dir    = saldo >= 0 ? "Saldo a favor tuyo" : "Saldo que debés";
+  const cls    = saldo >= 0 ? "positivo" : "negativo";
+  const movs   = data.movimientos || [];
+  const totalDebe  = movs.filter(m => m.tipo_flujo === "debe").reduce((a,m) => a + m.monto_usd, 0);
+  const totalHaber = movs.filter(m => m.tipo_flujo === "haber").reduce((a,m) => a + m.monto_usd, 0);
+
+  const movsHTML = movs.length
+    ? movs.slice().reverse().map(m => {
+        const esDebe = m.tipo_flujo === "debe";
+        const tipoClass = {venta:"tipo-venta",pago:"tipo-pago",credito:"tipo-credito",ajuste:"tipo-ajuste"}[m.tipo] || "tipo-ajuste";
+        return `<div class="mov-item">
+          <div class="mov-left">
+            <div class="mov-concepto">${m.concepto}</div>
+            <div class="mov-fecha">${m.fecha}</div>
+            <span class="mov-tipo ${tipoClass}">${m.tipo}</span>
+          </div>
+          <div class="mov-monto ${esDebe ? 'debe' : 'haber'}">
+            ${esDebe ? "−" : "+"}U$S ${m.monto_usd.toLocaleString()}
+          </div>
+        </div>`;
+      }).join("")
+    : `<div class="empty-state">Sin movimientos registrados</div>`;
+
+  wrap.innerHTML = `
+    <div class="cc-header">
+      <div class="cc-header-name">Cuenta corriente — ${currentUser.nombre}</div>
+      <div class="cc-saldo-label">Saldo actual</div>
+      <div class="cc-saldo ${cls}">${signo}U$S ${Math.abs(saldo).toLocaleString()}</div>
+      <div class="cc-dir">${dir}</div>
+    </div>
+    <div class="cc-stats">
+      <div class="cc-stat">
+        <div class="cc-stat-label">Total compras</div>
+        <div class="cc-stat-val">U$S ${totalDebe.toLocaleString()}</div>
+      </div>
+      <div class="cc-stat">
+        <div class="cc-stat-label">Total pagado</div>
+        <div class="cc-stat-val">U$S ${totalHaber.toLocaleString()}</div>
+      </div>
+    </div>
+    <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em">Últimos movimientos</div>
+    <div class="mov-list">${movsHTML}</div>`;
+}
+
+// ── FALLBACKS (para cuando no hay Sheet conectado aún) ────────────────────
+const FALLBACK_STOCK = [
+  {id:1,modelo:"iPhone 13",capacidad:"128 GB",color:"Medianoche",estado:"Excelente",precio_usd:1100,cotizacion:1455},
+  {id:2,modelo:"iPhone 13",capacidad:"128 GB",color:"Blanco Estelar",estado:"Muy bueno",precio_usd:1050,cotizacion:1455},
+  {id:3,modelo:"iPhone 14",capacidad:"256 GB",color:"Negro",estado:"Excelente",precio_usd:1600,cotizacion:1455},
+  {id:4,modelo:"iPhone 15",capacidad:"128 GB",color:"Azul",estado:"Excelente",precio_usd:1950,cotizacion:1455},
+  {id:5,modelo:"iPhone 15 Pro",capacidad:"256 GB",color:"Titanio",estado:"Excelente",precio_usd:2600,cotizacion:1455},
+];
+const FALLBACK_CC = {
+  saldo: -350,
+  movimientos: [
+    {fecha:"10/04/2026",concepto:"iPhone 14 256GB Negro",tipo:"venta",tipo_flujo:"debe",monto_usd:1600},
+    {fecha:"08/04/2026",concepto:"Pago parcial",tipo:"pago",tipo_flujo:"haber",monto_usd:1250},
+    {fecha:"01/04/2026",concepto:"iPhone 13 128GB",tipo:"venta",tipo_flujo:"debe",monto_usd:1100},
+    {fecha:"28/03/2026",concepto:"Crédito por devolución",tipo:"credito",tipo_flujo:"haber",monto_usd:400},
+  ]
+};
+
+// ── AUTO-LOGIN si hay sesión guardada ─────────────────────────────────────
+(function() {
+  const saved = sessionStorage.getItem("dr_user");
+  if (saved) { currentUser = JSON.parse(saved); showApp(); }
+})();
+</script>
+</body>
+</html>
