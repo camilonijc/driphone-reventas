@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dr.iPhone — Admin</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --green:#27500A;--green-light:#EAF3DE;--green-mid:#3B6D11;
+  --text:#1a1a1a;--text2:#555;--text3:#999;
+  --bg:#fff;--bg2:#f8f9fa;--bg3:#f1f3f5;
+  --border:#e0e0e0;--border2:#ccc;
+  --danger:#991B1B;--danger-bg:#FEE2E2;
+  --info:#185FA5;--info-bg:#E6F1FB;
+  --warn:#854F0B;--warn-bg:#FAEEDA;
+  --radius:10px;--radius-sm:6px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg2);color:var(--text);min-height:100vh}
+.screen{display:none}.screen.active{display:block}
+
+/* LOGIN */
+.login-page{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.login-card{background:var(--bg);border-radius:16px;border:1px solid var(--border);padding:2rem;width:100%;max-width:360px}
+.logo{font-size:22px;font-weight:700;color:var(--text)}.logo span{color:var(--green-mid)}
+.login-sub{font-size:13px;color:var(--text3);margin-top:4px;margin-bottom:1.5rem}
+.admin-badge{display:inline-block;background:var(--green-light);color:var(--green-mid);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;margin-bottom:1.5rem;text-transform:uppercase;letter-spacing:.05em}
+.field{margin-bottom:1rem}
+.field label{display:block;font-size:11px;color:var(--text2);font-weight:600;margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.field input{width:100%;padding:10px 13px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;background:var(--bg);color:var(--text);outline:none;transition:border .15s}
+.field input:focus{border-color:var(--green-mid)}
+.login-btn{width:100%;padding:12px;border-radius:var(--radius-sm);border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:background .15s}
+.login-btn:hover{background:var(--green-mid)}
+.err{font-size:12px;color:var(--danger);margin-top:8px;display:none}
+.err.show{display:block}
+
+/* SHELL */
+.shell{max-width:900px;margin:0 auto;padding:0 16px 40px}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:16px 0 24px}
+.topbar-left{display:flex;align-items:center;gap:12px}
+.topbar .logo{font-size:20px}
+.topbar-badge{background:var(--green-light);color:var(--green-mid);font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em}
+.logout-btn{background:none;border:1px solid var(--border);border-radius:var(--radius-sm);padding:6px 14px;font-size:12px;color:var(--text3);cursor:pointer}
+.logout-btn:hover{border-color:var(--danger);color:var(--danger)}
+
+/* SUMMARY CARDS */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px}
+.summary-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+.sc-label{font-size:11px;color:var(--text3);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.sc-val{font-size:24px;font-weight:700;color:var(--text)}
+.sc-val.red{color:var(--danger)}
+.sc-val.green{color:var(--green-mid)}
+.sc-sub{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* REVENTAS */
+.section-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:14px}
+.reventas-grid{display:grid;gap:14px}
+.reventa-card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.rc-header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;user-select:none;transition:background .15s}
+.rc-header:hover{background:var(--bg2)}
+.rc-header-left{display:flex;align-items:center;gap:10px}
+.rc-avatar{width:36px;height:36px;border-radius:50%;background:var(--green-light);color:var(--green-mid);font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.rc-name{font-size:15px;font-weight:600;color:var(--text)}
+.rc-code{font-size:11px;color:var(--text3);margin-top:1px}
+.rc-header-right{display:flex;align-items:center;gap:12px}
+.saldo-pill{font-size:13px;font-weight:700;padding:4px 12px;border-radius:20px}
+.saldo-pos{background:var(--green-light);color:var(--green-mid)}
+.saldo-neg{background:var(--danger-bg);color:var(--danger)}
+.saldo-zero{background:var(--bg3);color:var(--text3)}
+.chevron{font-size:18px;color:var(--text3);transition:transform .2s}
+.chevron.open{transform:rotate(180deg)}
+.rc-body{display:none;border-top:1px solid var(--border)}
+.rc-body.open{display:block}
+.rc-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-bottom:1px solid var(--border)}
+.rc-stat{padding:12px 16px;border-right:1px solid var(--border)}
+.rc-stat:last-child{border-right:none}
+.rc-stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px}
+.rc-stat-val{font-size:15px;font-weight:700;color:var(--text)}
+
+/* MOVIMIENTOS */
+.movs-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px}
+.movs-title{font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em}
+.add-mov-btn{display:flex;align-items:center;gap:5px;background:var(--green);color:#fff;border:none;border-radius:var(--radius-sm);padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer}
+.add-mov-btn:hover{background:var(--green-mid)}
+.mov-list{padding:0 16px 14px}
+.mov-item{display:flex;align-items:flex-start;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bg3)}
+.mov-item:last-child{border-bottom:none}
+.mov-info{flex:1}
+.mov-concepto{font-size:13px;font-weight:500;color:var(--text)}
+.mov-meta{display:flex;align-items:center;gap:6px;margin-top:3px}
+.mov-fecha{font-size:11px;color:var(--text3)}
+.mov-tipo{font-size:10px;font-weight:600;padding:1px 7px;border-radius:20px}
+.tipo-venta{background:var(--info-bg);color:var(--info)}
+.tipo-pago{background:var(--green-light);color:var(--green-mid)}
+.tipo-credito{background:var(--warn-bg);color:var(--warn)}
+.tipo-ajuste{background:var(--bg3);color:var(--text2)}
+.mov-monto{font-size:14px;font-weight:700}
+.mov-monto.debe{color:var(--danger)}
+.mov-monto.haber{color:var(--green-mid)}
+.empty-movs{padding:16px;text-align:center;font-size:13px;color:var(--text3)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.hidden{display:none}
+.modal{background:var(--bg);border-radius:16px;width:100%;max-width:420px;overflow:hidden}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--border)}
+.modal-title{font-size:16px;font-weight:700}
+.modal-close{background:none;border:none;font-size:22px;color:var(--text3);cursor:pointer;line-height:1}
+.modal-body{padding:20px}
+.modal-footer{padding:0 20px 20px;display:flex;gap:10px}
+.btn-primary{flex:1;padding:11px;border-radius:var(--radius-sm);border:none;background:var(--green);color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.btn-primary:hover{background:var(--green-mid)}
+.btn-secondary{flex:1;padding:11px;border-radius:var(--radius-sm);border:1px solid var(--border);background:none;color:var(--text2);font-size:14px;cursor:pointer}
+.select-field{width:100%;padding:10px 13px;border:1px solid var(--border2);border-radius:var(--radius-sm);font-size:14px;background:var(--bg);color:var(--text);outline:none;margin-bottom:12px}
+.select-field:focus{border-color:var(--green-mid)}
+.modal-reventa-name{font-size:13px;font-weight:600;color:var(--green-mid);margin-bottom:14px;padding:8px 12px;background:var(--green-light);border-radius:var(--radius-sm)}
+
+/* LOADING */
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--green-mid);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-state{text-align:center;padding:3rem;color:var(--text3)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1a1a1a;color:#fff;padding:10px 20px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:200;opacity:0;transition:opacity .3s;pointer-events:none}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="screen-login" class="screen active">
+  <div class="login-page">
+    <div class="login-card">
+      <div class="logo">Dr.<span>iPhone</span></div>
+      <div class="login-sub">Panel de administración</div>
+      <div class="admin-badge">Admin</div>
+      <div class="field">
+        <label>Contraseña de admin</label>
+        <input type="password" id="admin-pass" placeholder="••••••••" autocomplete="off"/>
+      </div>
+      <div id="login-err" class="err">Contraseña incorrecta</div>
+      <button class="login-btn" onclick="doLogin()">Entrar al panel</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL -->
+<div id="screen-admin" class="screen">
+  <div class="shell">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="logo">Dr.<span>iPhone</span></div>
+        <span class="topbar-badge">Admin</span>
+      </div>
+      <button class="logout-btn" onclick="doLogout()">Cerrar sesión</button>
+    </div>
+
+    <!-- RESUMEN GLOBAL -->
+    <div class="summary-grid" id="summary-grid">
+      <div class="summary-card"><div class="sc-label">Cargando...</div></div>
+    </div>
+
+    <!-- REVENTAS -->
+    <div class="section-title">Cuentas corrientes</div>
+    <div class="reventas-grid" id="reventas-grid">
+      <div class="loading-state"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL AGREGAR MOVIMIENTO -->
+<div class="modal-overlay hidden" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Registrar movimiento</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-reventa-name" id="modal-reventa-name"></div>
+      <div class="field">
+        <label>Tipo</label>
+        <select class="select-field" id="mov-tipo">
+          <option value="pago">Pago recibido</option>
+          <option value="venta">Venta (debe)</option>
+          <option value="credito">Crédito a favor</option>
+          <option value="ajuste">Ajuste</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Concepto</label>
+        <input type="text" class="select-field" id="mov-concepto" placeholder="Ej: Pago transferencia"/>
+      </div>
+      <div class="field">
+        <label>Monto USD</label>
+        <input type="number" class="select-field" id="mov-monto" placeholder="0" min="0" step="0.01"/>
+      </div>
+      <div class="field">
+        <label>Fecha</label>
+        <input type="date" class="select-field" id="mov-fecha"/>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" onclick="closeModal()">Cancelar</button>
+      <button class="btn-primary" onclick="guardarMovimiento()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────
+const ADMIN_PASS  = "DRIPHONE2026"; // ← cambiá esta contraseña
+const API_BASE    = "/api";
+
+let allData    = [];
+let modalCodigo = null;
+
+// ── LOGIN ─────────────────────────────────────────────────────────────────
+document.getElementById("admin-pass").addEventListener("keydown", e => {
+  if (e.key === "Enter") doLogin();
+});
+
+function doLogin() {
+  const pass = document.getElementById("admin-pass").value.trim();
+  const err  = document.getElementById("login-err");
+  if (pass === ADMIN_PASS) {
+    err.classList.remove("show");
+    sessionStorage.setItem("dr_admin", "1");
+    document.getElementById("screen-login").classList.remove("active");
+    document.getElementById("screen-admin").classList.add("active");
+    loadAll();
+  } else {
+    err.classList.add("show");
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem("dr_admin");
+  document.getElementById("screen-admin").classList.remove("active");
+  document.getElementById("screen-login").classList.add("active");
+  document.getElementById("admin-pass").value = "";
+}
+
+// ── DATA ──────────────────────────────────────────────────────────────────
+async function loadAll() {
+  try {
+    // Cargar lista de reventas
+    const resAuth = await fetch(`${API_BASE}/reventas`);
+    const dataAuth = await resAuth.json();
+    const reventas = dataAuth.reventas || [];
+
+    // Cargar CC de cada uno en paralelo
+    const ccs = await Promise.all(
+      reventas.map(r =>
+        fetch(`${API_BASE}/cc?codigo=${r.codigo}`)
+          .then(res => res.json())
+          .then(data => ({ ...r, ...data }))
+          .catch(() => ({ ...r, saldo: 0, movimientos: [] }))
+      )
+    );
+
+    allData = ccs;
+    renderSummary();
+    renderReventas();
+  } catch(e) {
+    document.getElementById("reventas-grid").innerHTML =
+      `<div class="loading-state">Error al cargar datos. Verificá la conexión.</div>`;
+  }
+}
+
+// ── SUMMARY ───────────────────────────────────────────────────────────────
+function renderSummary() {
+  const total     = allData.length;
+  const conDeuda  = allData.filter(r => r.saldo < 0).length;
+  const conSaldo  = allData.filter(r => r.saldo > 0).length;
+  const deudaTotal = allData.reduce((a, r) => r.saldo < 0 ? a + Math.abs(r.saldo) : a, 0);
+
+  document.getElementById("summary-grid").innerHTML = `
+    <div class="summary-card">
+      <div class="sc-label">Total reventas</div>
+      <div class="sc-val">${total}</div>
+      <div class="sc-sub">activos</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Con deuda</div>
+      <div class="sc-val red">${conDeuda}</div>
+      <div class="sc-sub">reventas deben</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Con saldo a favor</div>
+      <div class="sc-val green">${conSaldo}</div>
+      <div class="sc-sub">reventas en positivo</div>
+    </div>
+    <div class="summary-card">
+      <div class="sc-label">Deuda total</div>
+      <div class="sc-val red">U$S ${deudaTotal.toLocaleString()}</div>
+      <div class="sc-sub">suma de deudas</div>
+    </div>`;
+}
+
+// ── REVENTAS ──────────────────────────────────────────────────────────────
+function renderReventas() {
+  if (!allData.length) {
+    document.getElementById("reventas-grid").innerHTML =
+      `<div class="loading-state">No hay reventas cargados en el Sheet.</div>`;
+    return;
+  }
+
+  // Ordenar: primero los que deben más
+  const sorted = [...allData].sort((a, b) => a.saldo - b.saldo);
+
+  document.getElementById("reventas-grid").innerHTML = sorted.map(r => {
+    const saldo   = r.saldo || 0;
+    const signo   = saldo >= 0 ? "+" : "";
+    const pillCls = saldo > 0 ? "saldo-pos" : saldo < 0 ? "saldo-neg" : "saldo-zero";
+    const movs    = r.movimientos || [];
+    const totalDebe  = movs.filter(m => m.tipo_flujo === "debe").reduce((a,m) => a + m.monto_usd, 0);
+    const totalHaber = movs.filter(m => m.tipo_flujo === "haber").reduce((a,m) => a + m.monto_usd, 0);
+    const inicial = r.nombre ? r.nombre[0].toUpperCase() : "?";
+
+    const movsHTML = movs.length
+      ? [...movs].reverse().slice(0, 5).map(m => {
+          const esDebe = m.tipo_flujo === "debe";
+          const tipoClass = {venta:"tipo-venta",pago:"tipo-pago",credito:"tipo-credito",ajuste:"tipo-ajuste"}[m.tipo] || "tipo-ajuste";
+          return `<div class="mov-item">
+            <div class="mov-info">
+              <div class="mov-concepto">${m.concepto}</div>
+              <div class="mov-meta">
+                <span class="mov-fecha">${m.fecha}</span>
+                <span class="mov-tipo ${tipoClass}">${m.tipo}</span>
+              </div>
+            </div>
+            <div class="mov-monto ${esDebe ? 'debe' : 'haber'}">
+              ${esDebe ? "−" : "+"}U$S ${m.monto_usd.toLocaleString()}
+            </div>
+          </div>`;
+        }).join("")
+      : `<div class="empty-movs">Sin movimientos</div>`;
+
+    return `<div class="reventa-card" id="rc-${r.codigo}">
+      <div class="rc-header" onclick="toggleReventa('${r.codigo}')">
+        <div class="rc-header-left">
+          <div class="rc-avatar">${inicial}</div>
+          <div>
+            <div class="rc-name">${r.nombre}</div>
+            <div class="rc-code">${r.codigo}</div>
+          </div>
+        </div>
+        <div class="rc-header-right">
+          <span class="saldo-pill ${pillCls}">${signo}U$S ${Math.abs(saldo).toLocaleString()}</span>
+          <span class="chevron" id="chev-${r.codigo}">▾</span>
+        </div>
+      </div>
+      <div class="rc-body" id="body-${r.codigo}">
+        <div class="rc-stats">
+          <div class="rc-stat">
+            <div class="rc-stat-label">Total compras</div>
+            <div class="rc-stat-val">U$S ${totalDebe.toLocaleString()}</div>
+          </div>
+          <div class="rc-stat">
+            <div class="rc-stat-label">Total pagado</div>
+            <div class="rc-stat-val">U$S ${totalHaber.toLocaleString()}</div>
+          </div>
+          <div class="rc-stat">
+            <div class="rc-stat-label">Movimientos</div>
+            <div class="rc-stat-val">${movs.length}</div>
+          </div>
+        </div>
+        <div class="movs-header">
+          <span class="movs-title">Últimos movimientos</span>
+          <button class="add-mov-btn" onclick="openModal('${r.codigo}','${r.nombre}')">
+            + Registrar
+          </button>
+        </div>
+        <div class="mov-list">${movsHTML}</div>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function toggleReventa(codigo) {
+  const body = document.getElementById(`body-${codigo}`);
+  const chev = document.getElementById(`chev-${codigo}`);
+  body.classList.toggle("open");
+  chev.classList.toggle("open");
+}
+
+// ── MODAL ─────────────────────────────────────────────────────────────────
+function openModal(codigo, nombre) {
+  modalCodigo = codigo;
+  document.getElementById("modal-reventa-name").textContent = nombre;
+  document.getElementById("mov-concepto").value = "";
+  document.getElementById("mov-monto").value = "";
+  document.getElementById("mov-tipo").value = "pago";
+  // Fecha de hoy
+  const hoy = new Date().toISOString().split("T")[0];
+  document.getElementById("mov-fecha").value = hoy;
+  document.getElementById("modal-overlay").classList.remove("hidden");
+}
+
+function closeModal() {
+  document.getElementById("modal-overlay").classList.add("hidden");
+  modalCodigo = null;
+}
+
+async function guardarMovimiento() {
+  const tipo     = document.getElementById("mov-tipo").value;
+  const concepto = document.getElementById("mov-concepto").value.trim();
+  const monto    = parseFloat(document.getElementById("mov-monto").value);
+  const fecha    = document.getElementById("mov-fecha").value;
+
+  if (!concepto || !monto || !fecha) {
+    showToast("Completá todos los campos");
+    return;
+  }
+
+  const tipo_flujo = ["pago","credito"].includes(tipo) ? "haber" : "debe";
+
+  // Formatear fecha a DD/MM/YYYY
+  const [y,m,d] = fecha.split("-");
+  const fechaFormateada = `${d}/${m}/${y}`;
+
+  try {
+    const res = await fetch(`${API_BASE}/add-movimiento`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        codigo:     modalCodigo,
+        fecha:      fechaFormateada,
+        concepto,
+        tipo,
+        tipo_flujo,
+        monto_usd:  monto,
+      })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast("✓ Movimiento registrado");
+      closeModal();
+      setTimeout(() => loadAll(), 800);
+    } else {
+      showToast("Error al guardar. Revisá la configuración.");
+    }
+  } catch(e) {
+    showToast("Error de conexión");
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 2800);
+}
+
+// ── AUTO LOGIN ─────────────────────────────────────────────────────────────
+if (sessionStorage.getItem("dr_admin")) {
+  document.getElementById("screen-login").classList.remove("active");
+  document.getElementById("screen-admin").classList.add("active");
+  loadAll();
+}
+</script>
+</body>
+</html>
