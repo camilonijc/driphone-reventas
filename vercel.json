@@ -4,6 +4,7 @@
   "outputDirectory": "public",
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
+    { "src": "/images/(.*)", "dest": "/images/$1" },
     { "src": "/admin", "dest": "/admin.html" },
     { "src": "/usados", "dest": "/usados.html" },
     { "src": "/nuevos", "dest": "/nuevos.html" },
