@@ -10,7 +10,7 @@ export default async function handler(req, res) {
 
   const SHEET_ID = process.env.SHEET_ID;
   const API_KEY  = process.env.GOOGLE_API_KEY;
-  const RANGE    = "Stock_Web!A2:N300";
+  const RANGE = "Stock_Web!A2:O300";
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
 
   try {
@@ -33,6 +33,7 @@ export default async function handler(req, res) {
         stock_count:       parseInt(r[11])   || 0,
         precio_usd_publico:parseFloat(r[12]) || parseFloat(r[5]) || 0,
         cotizacion_transf: parseFloat(r[13]) || Math.round((parseFloat(r[6])||1455) * 1.2),
+        imagen:            r[14] || "",
       }));
 
     return res.status(200).json({ items, updated: new Date().toISOString() });
