@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dr.iPhone — iPhones Usados Neuquén</title>
+<meta name="description" content="iPhones usados verificados en Neuquén. Batería revisada, garantía de funcionamiento."/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --brand:#536F7A;--bd:#3d535c;--bdd:#2a3a42;
+  --bx:#e8eef0;--bp:#f8f9fa;
+  --w:#fff;--td:#1a1a1a;--t2:#555;--t3:#aaa;
+  --green:#2d6a2d;--gbg:#f0f4f0;
+  --red:#a1160a;--rbg:#fde8e8;
+  --amber:#9a6700;--abg:#fef6e0;
+  --wa:#25D366;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bp);color:var(--td);min-height:100vh}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:var(--w);border-bottom:1px solid var(--bx);position:sticky;top:0;z-index:20}
+.logo-name{font-size:18px;font-weight:800;color:var(--td);letter-spacing:-.4px}
+.logo-name span{color:var(--brand)}
+.logo-tag{font-size:9px;color:var(--t3);letter-spacing:.08em;font-weight:500;margin-top:1px}
+.nav-r{display:flex;gap:6px}
+.nb{padding:6px 13px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid var(--bx);color:var(--t2);background:none;cursor:pointer;text-decoration:none;display:inline-block;transition:all .15s}
+.nb:hover{background:var(--bp)}
+.nb.active{background:var(--bdd);color:var(--w);border-color:var(--bdd)}
+.nb.wa{background:var(--wa);color:var(--w);border-color:var(--wa)}
+
+.hero{padding:40px 20px 28px;background:var(--w);border-bottom:1px solid var(--bx);text-align:center}
+.hero-eyebrow{font-size:11px;font-weight:600;color:var(--brand);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:6px}
+.hero-dot{width:5px;height:5px;border-radius:50%;background:var(--brand);animation:bk 2s infinite}
+@keyframes bk{0%,100%{opacity:1}50%{opacity:.3}}
+.hero h1{font-size:30px;font-weight:800;color:var(--td);letter-spacing:-.8px;line-height:1.15;margin-bottom:10px}
+.hero p{font-size:13px;color:var(--t2);line-height:1.7;max-width:380px;margin:0 auto 20px}
+.hero-stats{display:flex;gap:12px;justify-content:center}
+.hstat{text-align:center;padding:12px 20px;background:var(--bp);border-radius:12px;border:1px solid var(--bx)}
+.hstat-v{font-size:22px;font-weight:800;color:var(--td)}
+.hstat-l{font-size:10px;color:var(--t3);margin-top:2px}
+
+.filters{padding:14px 20px 12px;background:var(--w);border-bottom:1px solid var(--bx);position:sticky;top:57px;z-index:10}
+.sbox{display:flex;align-items:center;gap:8px;background:var(--bp);border:1px solid var(--bx);border-radius:10px;padding:10px 14px;margin-bottom:10px}
+.sbox input{border:none;background:none;font-size:14px;color:var(--td);outline:none;width:100%}
+.sbox input::placeholder{color:var(--t3)}
+.chips{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{padding:6px 14px;border-radius:20px;font-size:11px;font-weight:600;white-space:nowrap;flex-shrink:0;border:1px solid var(--bx);cursor:pointer;background:var(--w);color:var(--t2)}
+.chip.on{background:var(--bdd);color:var(--w);border-color:var(--bdd)}
+
+.content{max-width:720px;margin:0 auto;padding:20px}
+.count-bar{font-size:11px;color:var(--t3);font-weight:500;margin-bottom:16px}
+.count-bar strong{color:var(--td)}
+
+/* PRODUCT ROW */
+.prod-row{background:var(--w);border-radius:16px;padding:16px;margin-bottom:14px;border:1px solid var(--bx);display:flex;gap:16px;align-items:flex-start;transition:box-shadow .2s}
+.prod-row:hover{box-shadow:0 4px 20px rgba(0,0,0,.06)}
+.prod-img{width:88px;height:88px;border-radius:12px;background:var(--bp);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:40px;border:1px solid var(--bx)}
+.prod-body{flex:1;min-width:0}
+.prod-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:3px}
+.prod-model{font-size:16px;font-weight:800;color:var(--td);letter-spacing:-.3px}
+.prod-usd{font-size:18px;font-weight:800;color:var(--td);margin-left:8px;white-space:nowrap}
+.prod-detail{font-size:12px;color:var(--t3);margin-bottom:8px}
+.badges{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:10px}
+.badge{font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px}
+.b-green{background:var(--gbg);color:var(--green)}
+.b-amber{background:var(--abg);color:var(--amber)}
+.b-red{background:var(--rbg);color:var(--red)}
+.b-gray{background:var(--bp);color:var(--t2);border:1px solid var(--bx)}
+.bat-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.bat-track{flex:1;height:5px;background:var(--bx);border-radius:3px;overflow:hidden}
+.bat-fill{height:100%;border-radius:3px;transition:width .3s}
+.bat-label{font-size:11px;font-weight:700;white-space:nowrap}
+.prices-row{display:flex;gap:8px;margin-bottom:10px}
+.pbox{flex:1;background:var(--bp);border-radius:10px;padding:9px 11px;border:1px solid var(--bx)}
+.pbox-l{font-size:9px;color:var(--t3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.pbox-v{font-size:13px;font-weight:700;color:var(--td)}
+.wa-btn{width:100%;padding:11px;border-radius:10px;border:none;background:var(--td);color:var(--w);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;transition:opacity .15s}
+.wa-btn:hover{opacity:.88}
+
+.info-section{background:var(--w);border-radius:16px;padding:20px;margin-bottom:14px;border:1px solid var(--bx)}
+.info-title{font-size:16px;font-weight:700;color:var(--td);margin-bottom:16px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.info-item{padding:12px;background:var(--bp);border-radius:12px;border:1px solid var(--bx)}
+.info-icon{font-size:20px;margin-bottom:6px}
+.info-text strong{display:block;font-size:12px;font-weight:700;color:var(--td);margin-bottom:3px}
+.info-text span{font-size:11px;color:var(--t2);line-height:1.5}
+.faq-item{border-bottom:1px solid var(--bx);padding:14px 0}
+.faq-item:last-child{border-bottom:none}
+.faq-q{font-size:14px;font-weight:600;color:var(--td);margin-bottom:5px}
+.faq-a{font-size:13px;color:var(--t2);line-height:1.6}
+
+.empty{text-align:center;padding:4rem;color:var(--t3);font-size:14px}
+footer{background:var(--td);padding:28px 20px;text-align:center;margin-top:8px}
+.footer-logo{font-size:18px;font-weight:800;color:var(--w);margin-bottom:6px}
+footer p{font-size:12px;color:rgba(255,255,255,.4);margin-bottom:3px}
+footer a{color:rgba(255,255,255,.5);text-decoration:none}
+.wa-float{position:fixed;bottom:20px;right:20px;background:var(--wa);color:var(--w);border-radius:50%;width:54px;height:54px;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.2);z-index:100;text-decoration:none}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid var(--bx);border-top-color:var(--brand);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading{text-align:center;padding:3rem;color:var(--t3)}
+@media(min-width:600px){.info-grid{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="/" style="text-decoration:none">
+    <div class="logo-name">Dr.<span>iPhone</span></div>
+    <div class="logo-tag">THINK DIFFERENT · NEUQUÉN</div>
+  </a>
+  <div class="nav-r">
+    <a class="nb" href="/nuevos">Nuevos</a>
+    <a class="nb active" href="/usados">Usados</a>
+    <a class="nb wa" href="https://wa.me/5492993286202?text=Hola%20Dr.iPhone!%20Quiero%20consultar%20sobre%20usados." target="_blank">WhatsApp</a>
+  </div>
+</nav>
+
+<div class="hero">
+  <div class="hero-eyebrow"><span class="hero-dot"></span> Stock verificado hoy · Neuquén</div>
+  <h1>iPhones Usados<br>Verificados</h1>
+  <p>Batería controlada y certificada. Garantía de funcionamiento. Tomamos tu iPhone como parte de pago.</p>
+  <div class="hero-stats">
+    <div class="hstat"><div class="hstat-v" id="stat-total">—</div><div class="hstat-l">Disponibles</div></div>
+    <div class="hstat"><div class="hstat-v" id="stat-desde">—</div><div class="hstat-l">Desde U$S</div></div>
+    <div class="hstat"><div class="hstat-v" id="stat-bat">—</div><div class="hstat-l">Bat. promedio</div></div>
+  </div>
+</div>
+
+<div class="filters">
+  <div class="sbox">
+    <svg width="14" height="14" fill="none" stroke="#aaa" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="search-input" placeholder="Buscar modelo, color..." oninput="renderList()"/>
+  </div>
+  <div class="chips" id="filter-chips"></div>
+</div>
+
+<div class="content">
+  <div class="count-bar" id="count-bar"></div>
+  <div id="prod-list"><div class="loading"><div class="spinner"></div><br>Cargando equipos...</div></div>
+
+  <div class="info-section">
+    <div class="info-title">🔍 ¿Cómo verificamos los equipos?</div>
+    <div class="info-grid">
+      <div class="info-item"><div class="info-icon">🔋</div><div class="info-text"><strong>Batería revisada</strong><span>Verificamos el % real de salud con software especializado</span></div></div>
+      <div class="info-item"><div class="info-icon">📱</div><div class="info-text"><strong>Pantalla original</strong><span>Revisamos que sea pantalla original Apple</span></div></div>
+      <div class="info-item"><div class="info-icon">🔄</div><div class="info-text"><strong>Parte de pago</strong><span>Tomamos tu iPhone usado como parte de pago</span></div></div>
+      <div class="info-item"><div class="info-icon">✅</div><div class="info-text"><strong>Garantía de funcionamiento</strong><span>Si falla por defecto, lo resolvemos</span></div></div>
+    </div>
+  </div>
+
+  <div class="info-section">
+    <div class="info-title">❓ Preguntas frecuentes</div>
+    <div class="faq-item"><div class="faq-q">¿Los equipos tienen garantía?</div><div class="faq-a">Sí, todos tienen garantía de funcionamiento. Si el equipo falla por defecto, lo resolvemos.</div></div>
+    <div class="faq-item"><div class="faq-q">¿Qué significa la batería al X%?</div><div class="faq-a">Es la salud real medida con software especializado. Por encima del 85% funciona perfectamente en el día a día.</div></div>
+    <div class="faq-item"><div class="faq-q">¿Tomás mi iPhone viejo?</div><div class="faq-a">Sí, tomamos iPhones usados como parte de pago. Consultanos el valor por WhatsApp antes de venir.</div></div>
+    <div class="faq-item"><div class="faq-q">¿Dónde retiro el equipo?</div><div class="faq-a">En nuestras oficinas en el centro de Neuquén Capital, con turno previo coordinado por WhatsApp.</div></div>
+    <div class="faq-item"><div class="faq-q">¿Hacen envíos?</div><div class="faq-a">Por el momento no realizamos envíos. Solo retiro presencial en Neuquén Capital con turno previo.</div></div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-logo">Dr.iPhone</div>
+  <p>Neuquén Capital · Solo con turno previo</p>
+  <p><a href="https://wa.me/5492993286202">299-3286202</a> · <a href="https://wa.me/5492993286202">Escribinos por WhatsApp</a></p>
+  <p style="margin-top:10px;font-size:11px;color:rgba(255,255,255,.2)">© 2026 Dr.iPhone — Think Different</p>
+</footer>
+
+<a class="wa-float" href="https://wa.me/5492993286202?text=Hola%20Dr.iPhone!%20Quiero%20consultar%20sobre%20un%20usado." target="_blank">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+</a>
+
+<script>
+const WA = "5492993286202";
+const API = "/api";
+let items = [];
+let activeFilter = "Todos";
+
+async function loadItems() {
+  try {
+    const res = await fetch(`${API}/usados`);
+    const data = await res.json();
+    items = (data.items||[]).filter(p => p.estado_stock==="EN STOCK");
+  } catch(e) { items = FALLBACK; }
+  buildStats();
+  buildFilters();
+  renderList();
+}
+
+function buildStats() {
+  document.getElementById("stat-total").textContent = items.length;
+  const precios = items.map(p=>p.precio_usd).filter(Boolean);
+  document.getElementById("stat-desde").textContent = precios.length ? "U$S "+Math.min(...precios) : "—";
+  const bats = items.map(p=>parseInt(p.bateria)).filter(Boolean);
+  document.getElementById("stat-bat").textContent = bats.length ? Math.round(bats.reduce((a,b)=>a+b,0)/bats.length)+"%" : "—";
+}
+
+function buildFilters() {
+  const models = ["Todos",...new Set(items.map(p=>p.modelo.split(" ").slice(0,2).join(" ")))];
+  document.getElementById("filter-chips").innerHTML = models.map(m =>
+    `<button class="chip${m===activeFilter?' on':''}" onclick="setFilter('${m}')">${m}</button>`
+  ).join("");
+}
+
+function setFilter(f){activeFilter=f;buildFilters();renderList();}
+
+function batColor(n){
+  n=parseInt(n)||0;
+  if(n>=85) return "#2d6a2d";
+  if(n>=75) return "#9a6700";
+  return "#a1160a";
+}
+
+function estadoBadge(e){
+  const map={"Excelente":"b-green","Muy bueno":"b-green","Bueno":"b-amber","Regular":"b-red"};
+  return map[e]||"b-gray";
+}
+
+function renderList() {
+  const q = (document.getElementById("search-input").value||"").toLowerCase();
+  const filtered = items.filter(p => {
+    const matchF = activeFilter==="Todos" || p.modelo.startsWith(activeFilter);
+    const matchS = !q || (p.modelo+" "+p.color+" "+p.capacidad).toLowerCase().includes(q);
+    return matchF && matchS;
+  });
+
+  document.getElementById("count-bar").innerHTML = `<strong>${filtered.length}</strong> equipo${filtered.length!==1?"s":""} disponible${filtered.length!==1?"s":""}`;
+  const list = document.getElementById("prod-list");
+
+  if(!filtered.length){list.innerHTML=`<div class="empty">Sin resultados</div>`;return;}
+
+  list.innerHTML = filtered.map(p => {
+    const bat = parseInt(p.bateria)||0;
+    const waMsg = encodeURIComponent(`Hola Dr.iPhone! 👋 Me interesa el ${p.modelo} ${p.capacidad}${p.color?" "+p.color:""} (batería ${bat}%). ¿Está disponible?`);
+    const arsE = p.precio_ars_efec ? "$"+Math.round(p.precio_ars_efec).toLocaleString("es-AR") : "Consultar";
+    const arsT = p.precio_ars_transf ? "$"+Math.round(p.precio_ars_transf).toLocaleString("es-AR") : "Consultar";
+
+    return `<div class="prod-row">
+      <div class="prod-img">📱</div>
+      <div class="prod-body">
+        <div class="prod-top">
+          <div class="prod-model">${p.modelo}</div>
+          <div class="prod-usd">U$S ${p.precio_usd}</div>
+        </div>
+        <div class="prod-detail">${p.capacidad}${p.color?" · "+p.color:""}${p.caja?" · "+p.caja:""}</div>
+        <div class="badges">
+          <span class="badge ${estadoBadge(p.estado)}">${p.estado||"Excelente"}</span>
+          ${p.garantia==="SI"?'<span class="badge b-green">✓ Garantía</span>':''}
+          <span class="badge b-gray">🔋 ${bat}%</span>
+        </div>
+        <div class="bat-row">
+          <div class="bat-track"><div class="bat-fill" style="width:${bat}%;background:${batColor(bat)}"></div></div>
+          <span class="bat-label" style="color:${batColor(bat)}">${bat}% batería</span>
+        </div>
+        <div class="prices-row">
+          <div class="pbox"><div class="pbox-l">Efectivo</div><div class="pbox-v">${arsE}</div></div>
+          <div class="pbox"><div class="pbox-l">Transf.</div><div class="pbox-v">${arsT}</div></div>
+        </div>
+        <button class="wa-btn" onclick="window.open('https://wa.me/${WA}?text=${waMsg}','_blank')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Consultar por WhatsApp
+        </button>
+      </div>
+    </div>`;
+  }).join("");
+}
+
+const FALLBACK = [
+  {modelo:"iPhone 15 Pro",capacidad:"256GB",color:"Black",estado:"Excelente",bateria:"92",estado_stock:"EN STOCK",precio_usd:1270,precio_ars_efec:1847850,precio_ars_transf:2235200,garantia:"NO"},
+  {modelo:"iPhone 14",capacidad:"128GB",color:"Blue",estado:"Muy bueno",bateria:"86",estado_stock:"EN STOCK",precio_usd:750,precio_ars_efec:1091250,precio_ars_transf:1320000,garantia:"SI"},
+];
+
+loadItems();
+</script>
+</body>
+</html>

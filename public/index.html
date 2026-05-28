@@ -59,7 +59,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .search-wrap svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--text3)}
 .search-wrap input{width:100%;padding:10px 12px 10px 34px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:var(--bg2);color:var(--text);outline:none}
 .search-wrap input:focus{border-color:var(--green-mid);background:var(--bg)}
-.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;scrollbar-width:none;margin-bottom:4px}
+.chips-wrap{position:relative;margin-bottom:4px}
+.chips-wrap::after{content:'';position:absolute;right:0;top:0;bottom:8px;width:40px;background:linear-gradient(to right,transparent,white);pointer-events:none}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:8px;padding-right:28px;scrollbar-width:none}
 .chips::-webkit-scrollbar{display:none}
 .chip{padding:5px 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg);font-size:12px;color:var(--text2);cursor:pointer;white-space:nowrap;font-weight:500;transition:all .15s;flex-shrink:0}
 .chip.active{background:var(--green);color:#fff;border-color:var(--green)}
@@ -187,7 +189,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
         <input type="text" id="search-input" placeholder="Buscar modelo, color..." oninput="renderGrid()"/>
       </div>
-      <div class="chips" id="filter-chips"></div>
+      <div class="chips-wrap"><div class="chips" id="filter-chips"></div></div>
       <div class="products-grid" id="product-grid">
         <div class="no-results">
           <div class="spinner"></div><br>Cargando catálogo...

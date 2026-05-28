@@ -4,6 +4,11 @@
   "outputDirectory": "public",
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/$1" },
-    { "src": "/(.*)", "dest": "/public/index.html" }
+    { "src": "/admin", "dest": "/public/admin.html" },
+    { "src": "/usados", "dest": "/public/usados.html" },
+    { "src": "/nuevos", "dest": "/public/nuevos.html" },
+    { "src": "/reventas", "dest": "/public/index.html" },
+    { "src": "/", "dest": "/public/home.html" },
+    { "src": "/(.*)", "dest": "/public/home.html" }
   ]
 }
