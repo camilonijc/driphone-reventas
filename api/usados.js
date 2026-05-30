@@ -9,7 +9,7 @@ export default async function handler(req, res) {
 
   const SHEET_ID = process.env.SHEET_ID;
   const API_KEY  = process.env.GOOGLE_API_KEY;
-  const RANGE    = "Usados!A2:L300";
+  const RANGE    = "Usados!A2:M300";
   const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
 
   try {
@@ -32,6 +32,7 @@ export default async function handler(req, res) {
         precio_ars_efec:  parseFloat((r[9]  || "0").replace(/\./g,"").replace(",","."))  || 0,
         precio_ars_transf:parseFloat((r[10] || "0").replace(/\./g,"").replace(",",".")) || 0,
         estado:           r[11] || "Excelente",
+        imagen:           r[12] || "",
       }));
 
     return res.status(200).json({ items });
