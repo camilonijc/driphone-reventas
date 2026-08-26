@@ -137,10 +137,21 @@ function parsearCSV(csv) {
   })
 }
 
+// Corrige un problema conocido con números argentinos: WhatsApp a veces entrega el
+// número de quien escribe SIN el "9" que va después del código de país (54), pero para
+// poder responderle hay que agregárselo de vuelta, o el envío falla.
+function normalizarNumeroAR(numero) {
+  if (numero.startsWith('54') && !numero.startsWith('549')) {
+    return '549' + numero.slice(2)
+  }
+  return numero
+}
+
 // Manda un mensaje de texto por WhatsApp usando la Cloud API de Meta.
 async function enviarMensajeWhatsApp(destinatario, texto) {
   const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID
   const TOKEN = process.env.WHATSAPP_ACCESS_TOKEN
+  const destinatarioNormalizado = normalizarNumeroAR(destinatario)
 
   const resp = await fetch(`https://graph.facebook.com/v21.0/${PHONE_NUMBER_ID}/messages`, {
     method: 'POST',
@@ -150,7 +161,7 @@ async function enviarMensajeWhatsApp(destinatario, texto) {
     },
     body: JSON.stringify({
       messaging_product: 'whatsapp',
-      to: destinatario,
+      to: destinatarioNormalizado,
       type: 'text',
       text: { body: texto },
     }),
