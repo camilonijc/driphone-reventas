@@ -40,6 +40,10 @@ export default async function handler(req, res) {
         const de = mensaje.from
         const texto = mensaje.text.body
 
+        // Log temporal de diagnóstico: para ver el formato exacto del número que entrega
+        // Meta, comparado con el que se usa para responder (ya normalizado).
+        console.log('DIAGNÓSTICO — de:', JSON.stringify(de), '| normalizado:', JSON.stringify(normalizarNumeroAR(de)))
+
         const respuesta = await buscarStockYResponder(texto)
         await enviarMensajeWhatsApp(de, respuesta)
       }
