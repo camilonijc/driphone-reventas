@@ -128,7 +128,7 @@ export async function responder(q, ahora = new Date(), previo = "") {
     return salida("pase_informacion", PASE_INFORMACION, abierto);
   }
 
-  const esCanje = /\b(canje|canjear|canjeo|permuta|parte de pago|entregar? mi|tomas mi|toman mi|tomarias)\b/.test(texto);
+  const esCanje = esConsultaCanje(texto);
 
   if (esCanje && /\b(turno|turnos|reservar|agendar)\b/.test(texto)) {
     return salida("canje_recibido", `${TURNO_CANJE}\n\n${siguePersona(abierto)}`, abierto, true);
@@ -208,6 +208,13 @@ function salida(tipo, respuesta, abierto = false, deriva = false) {
 
 function saludo() {
   return `¡Hola! Soy el asistente virtual de Dr.iPhone. Decime qué modelo buscás y te paso precio y disponibilidad.\n\n${AVISO_PERSONA}`;
+}
+
+function esConsultaCanje(texto) {
+  if (/\b(dolar|tipo de cambio)\b/.test(texto)) return false;
+  if (/\b(canje|canjes|canjear|canjeo|canjean|permuta|permutar|permutan|parte de pago|entrego|entregar? mi|tomas? mi|toman mi|tomarias|reciben mi|vendo mi|vender mi|quiero vender|cuanto (me )?(das|dan|pagas|pagan|tomas|toman|ofreces|ofrecen)|cuanto vale mi|cuanto sale mi)\b/.test(texto)) return true;
+  if (/\b(cotizar|cotizarme|cotizame|cotizamelo|cotizas|cotizan|cotizen|cotice)\b/.test(texto)) return true;
+  return /\bcotizacion\b/.test(texto) && /\b(iphone|celu|celular|telefono|equipo|mi|usado|\d{2})\b/.test(texto);
 }
 
 function siguePersona(abierto) {
