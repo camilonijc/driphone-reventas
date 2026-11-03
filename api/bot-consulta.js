@@ -2,8 +2,11 @@
 //
 // ManyChat hace POST con { "q": "<mensaje del cliente>" } y usa de la respuesta:
 //   respuesta -> texto para mandar al cliente
-//   tipo      -> saludo | humano | comprar | canje | pago | dolar | ubicacion |
-//                horario | garantia | producto | sin_resultado
+//   tipo      -> saludo | humano | comprar | canje | canje_recibido | pase_informacion |
+//                pago | dolar | ubicacion | horario | garantia | producto |
+//                sin_resultado | cierre
+//
+// ManyChat manda q="canje recibido" cuando el cliente ya pasó los datos de su equipo.
 //   deriva    -> "si" cuando hay que asignarle la charla a JC
 //   abierto   -> "si" | "no", según el horario del local
 //
@@ -13,6 +16,44 @@
 const WEB = "www.iphoneneuquen.com";
 const AVISO_PERSONA = "Si preferís, escribí *persona* y te atiende alguien del equipo.";
 const MAX_LINEAS = 8;
+
+const TURNO_COMPRA = `Para sacar tu turno podés hacerlo desde este link:
+https://calendly.com/driphoneneuquen/compra-directa
+
+En caso de encontrarse ocupado el horario, consultar para un sobreturno. Normalmente no hay inconvenientes.`;
+
+const TURNO_CANJE = `Para sacar tu turno de canje podés hacerlo desde este link:
+https://calendly.com/driphoneneuquen/canje
+
+📋 *Antes de venir al canje, preparar el iPhone:*
+
+1️⃣ Hacer copia en iCloud → https://youtu.be/uJ4OFJUVQ64?si=_UMXZoFVVnxl7bkG
+2️⃣ Instalar la app *Phone Diagnostics* (sí, es la del logo rojo)
+3️⃣ Cerrar sesión de iCloud *al menos 1 hora antes* ⚠️ Si llegás con sesión abierta, no podemos cerrarla en el momento y tenés que volver al día siguiente. Configuración - Tu nombre arriba del todo - Cerrar sesión - Cerrar sesión sin borrar.
+4️⃣ Quitar Face ID → Configuración → Face ID y código → Restablecer Face ID (si figura "no disponible", desactivar la protección antirrobo)
+
+—
+💡 *¿Preferís no perder tiempo y que lo hagamos nosotros?*
+Podés dejarlo y lo hacemos nosotros. Tarda aprox. 2 hs y tiene un costo de $70.000. En ese caso avisá con anticipación y coordinamos turno temprano.
+
+📲 Si querés que te pasemos la información al equipo nuevo, escribí *pase de información*.`;
+
+const PASE_INFORMACION = `📲 ¿Venís a hacer un canje y querés que te pasemos la información al equipo nuevo?
+
+Para hacerlo rápido y sin vueltas, necesitamos que vengas con esto listo:
+
+✅ Sabé tu contraseña de iCloud (Apple ID). Sin ella no podemos pasar tus datos ni desvincular el equipo.
+
+✅ Restablecé el Face ID:
+Andá a Ajustes > Face ID y código > Restablecer Face ID.
+Así no vamos a necesitar tu cara durante el proceso y el pase de información sale mucho más rápido.
+
+⚠️ ¿No te aparece disponible la opción "Restablecer Face ID"?
+Eso pasa porque tenés activada la Protección en caso de robo. En ese caso, primero desactivala:
+Ajustes > Face ID y código > Protección en caso de robo > Desactivar.
+Después de eso ya vas a poder restablecer el Face ID.
+
+💡 Te recomendamos hacerlo en tu casa antes de venir, porque fuera de tu casa el iPhone puede pedirte esperar 1 hora por seguridad.`;
 
 const COLORES = {
   black: ["black", "negro", "negra", "midnight", "medianoche"],
@@ -76,7 +117,21 @@ export async function responder(q, ahora = new Date()) {
     return salida("humano", mensajeDerivacion(abierto, "Te paso con una persona del equipo."), abierto, true);
   }
 
-  if (/\b(canje|canjear|canjeo|permuta|parte de pago|entregar? mi|tomas mi|toman mi|tomarias)\b/.test(texto)) {
+  if (texto === "canje recibido") {
+    return salida("canje_recibido", `${TURNO_CANJE}\n\n${siguePersona(abierto)}`, abierto, true);
+  }
+
+  if (/\b(pase de (informacion|datos)|pasar (la )?(informacion|info|datos)|pasen (la )?(informacion|info|datos))\b/.test(texto)) {
+    return salida("pase_informacion", PASE_INFORMACION, abierto);
+  }
+
+  const esCanje = /\b(canje|canjear|canjeo|permuta|parte de pago|entregar? mi|tomas mi|toman mi|tomarias)\b/.test(texto);
+
+  if (esCanje && /\b(turno|turnos|reservar|agendar)\b/.test(texto)) {
+    return salida("canje_recibido", `${TURNO_CANJE}\n\n${siguePersona(abierto)}`, abierto, true);
+  }
+
+  if (esCanje) {
     return salida(
       "canje",
       "¡Dale! Para cotizar tu equipo, pasame en un solo mensaje: modelo, capacidad, condición de batería y estado general.",
@@ -84,8 +139,8 @@ export async function responder(q, ahora = new Date()) {
     );
   }
 
-  if (/\b(quiero (comprar|comprarlo|llevarlo|reservar|reservarlo|ese|este)|lo quiero|lo compro|me lo llevo|comprar|reservar|reserva|sena|senar)\b/.test(texto)) {
-    return salida("comprar", mensajeDerivacion(abierto, "¡Genial! Te paso con una persona para coordinar."), abierto, true);
+  if (/\b(quiero (comprar|comprarlo|llevarlo|reservar|reservarlo|ese|este)|lo quiero|lo compro|me lo llevo|comprar|reservar|reserva|sena|senar|turno|turnos)\b/.test(texto)) {
+    return salida("comprar", `${TURNO_COMPRA}\n\n${siguePersona(abierto)}`, abierto, true);
   }
 
   if (/\b(cotizacion|dolar|tipo de cambio)\b/.test(texto)) {
@@ -117,7 +172,7 @@ export async function responder(q, ahora = new Date()) {
   }
 
   if (/\b(donde|ubicacion|ubicados|direccion|local|oficina|como llego)\b/.test(texto)) {
-    return salida("ubicacion", "Estamos en Elordi 82, Neuquén Capital.\n\nLunes a viernes de 9:30 a 18:30.\nSábados de 11 a 14.\n\nPara pasar a comprar hay que sacar turno. Escribí *comprar* y te ayudamos.", abierto);
+    return salida("ubicacion", "Estamos en Elordi 82, Neuquén Capital.\n\nLunes a viernes de 9:30 a 18:30.\nSábados de 11 a 14.\n\nPara pasar a comprar hay que sacar turno. Escribí *turno* y te paso el link.", abierto);
   }
 
   if (/\b(horario|horarios|hora|abren|abierto|cierran|atienden)\b/.test(texto)) {
@@ -150,6 +205,12 @@ function salida(tipo, respuesta, abierto = false, deriva = false) {
 
 function saludo() {
   return `¡Hola! Soy el asistente virtual de Dr.iPhone. Decime qué modelo buscás y te paso precio y disponibilidad.\n\n${AVISO_PERSONA}`;
+}
+
+function siguePersona(abierto) {
+  return abierto
+    ? "Si tenés alguna duda, una persona del equipo te responde por acá."
+    : "Si tenés alguna duda, te responde una persona del equipo cuando abramos.";
 }
 
 function mensajeDerivacion(abierto, inicio) {
