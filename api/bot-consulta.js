@@ -23,22 +23,6 @@ https://calendly.com/driphoneneuquen/compra-directa
 
 En caso de encontrarse ocupado el horario, consultar para un sobreturno. Normalmente no hay inconvenientes.`;
 
-const TURNO_CANJE = `Para sacar tu turno de canje podés hacerlo desde este link:
-https://calendly.com/driphoneneuquen/canje
-
-📋 *Antes de venir al canje, preparar el iPhone:*
-
-1️⃣ Hacer copia en iCloud → https://youtu.be/uJ4OFJUVQ64?si=_UMXZoFVVnxl7bkG
-2️⃣ Instalar la app *Phone Diagnostics* (sí, es la del logo rojo)
-3️⃣ Cerrar sesión de iCloud *al menos 1 hora antes* ⚠️ Si llegás con sesión abierta, no podemos cerrarla en el momento y tenés que volver al día siguiente. Configuración - Tu nombre arriba del todo - Cerrar sesión - Cerrar sesión sin borrar.
-4️⃣ Quitar Face ID → Configuración → Face ID y código → Restablecer Face ID (si figura "no disponible", desactivar la protección antirrobo)
-
-—
-💡 *¿Preferís no perder tiempo y que lo hagamos nosotros?*
-Podés dejarlo y lo hacemos nosotros. Tarda aprox. 2 hs y tiene un costo de $70.000. En ese caso avisá con anticipación y coordinamos turno temprano.
-
-📲 Si querés que te pasemos la información al equipo nuevo, escribí *pase de información*.`;
-
 const PASE_INFORMACION = `📲 ¿Venís a hacer un canje y querés que te pasemos la información al equipo nuevo?
 
 Para hacerlo rápido y sin vueltas, necesitamos que vengas con esto listo:
@@ -121,7 +105,7 @@ export async function responder(q, ahora = new Date(), previo = "") {
 
   // Si el mensaje anterior pidió los datos del canje, este mensaje son esos datos.
   if (previo === "canje" || texto === "canje recibido") {
-    return salida("canje_recibido", `${TURNO_CANJE}\n\n${siguePersona(abierto)}`, abierto, true);
+    return salida("canje_recibido", mensajeCanjeRecibido(abierto), abierto, true);
   }
 
   if (/\b(pase de (informacion|datos)|pasar (la )?(informacion|info|datos)|pasen (la )?(informacion|info|datos))\b/.test(texto)) {
@@ -129,10 +113,6 @@ export async function responder(q, ahora = new Date(), previo = "") {
   }
 
   const esCanje = esConsultaCanje(texto);
-
-  if (esCanje && /\b(turno|turnos|reservar|agendar)\b/.test(texto)) {
-    return salida("canje_recibido", `${TURNO_CANJE}\n\n${siguePersona(abierto)}`, abierto, true);
-  }
 
   if (esCanje) {
     return salida(
@@ -215,6 +195,13 @@ function esConsultaCanje(texto) {
   if (/\b(canje|canjes|canjear|canjeo|canjean|permuta|permutar|permutan|parte de pago|entrego|entregar? mi|tomas? mi|toman mi|tomarias|reciben mi|vendo mi|vender mi|quiero vender|cuanto (me )?(das|dan|pagas|pagan|tomas|toman|ofreces|ofrecen)|cuanto vale mi|cuanto sale mi)\b/.test(texto)) return true;
   if (/\b(cotizar|cotizarme|cotizame|cotizamelo|cotizas|cotizan|cotizen|cotice)\b/.test(texto)) return true;
   return /\bcotizacion\b/.test(texto) && /\b(iphone|celu|celular|telefono|equipo|mi|usado|\d{2})\b/.test(texto);
+}
+
+// El enlace de turno de canje lo manda JC cuando el cliente acepta el valor.
+function mensajeCanjeRecibido(abierto) {
+  return abierto
+    ? "¡Gracias! Ya recibimos los datos de tu equipo. En breve te contestamos por acá con el valor de canje."
+    : "¡Gracias! Ya recibimos los datos de tu equipo. Ahora estamos cerrados: te contestamos con el valor de canje apenas abramos.";
 }
 
 function siguePersona(abierto) {
