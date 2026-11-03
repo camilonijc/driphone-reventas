@@ -117,7 +117,7 @@ export async function responder(q, ahora = new Date()) {
   }
 
   if (/\b(donde|ubicacion|ubicados|direccion|local|oficina|como llego)\b/.test(texto)) {
-    return salida("ubicacion", "Estamos en Elordi e Irigoyen, Neuquén Capital.\n\nLunes a viernes de 9:30 a 18:30.\nSábados de 11 a 14.", abierto);
+    return salida("ubicacion", "Estamos en Elordi 82, Neuquén Capital.\n\nLunes a viernes de 9:30 a 18:30.\nSábados de 11 a 14.\n\nPara pasar a comprar hay que sacar turno. Escribí *comprar* y te ayudamos.", abierto);
   }
 
   if (/\b(horario|horarios|hora|abren|abierto|cierran|atienden)\b/.test(texto)) {
