@@ -83,7 +83,9 @@ export default async function handler(req, res) {
   const previo = String(req.body?.prev ?? req.query?.prev ?? "");
 
   try {
-    return res.status(200).json(await responder(q, new Date(), previo));
+    const { registro, ...respuesta } = await responder(q, new Date(), previo);
+    if (req.method === "POST") await registrarConsulta(respuesta, registro, q);
+    return res.status(200).json(respuesta);
   } catch (e) {
     console.error("bot-consulta error:", e);
     return res.status(200).json(salida(
@@ -179,7 +181,8 @@ export async function responder(q, ahora = new Date(), previo = "") {
   }
 
   const { nuevos, usados } = await leerStock();
-  return salida(...respuestaProducto(consulta, nuevos, usados), abierto);
+  const resultado = salida(...respuestaProducto(consulta, nuevos, usados), abierto);
+  return { ...resultado, registro: datosProducto(consulta, resultado) };
 }
 
 function salida(tipo, respuesta, abierto = false, deriva = false) {
@@ -314,6 +317,15 @@ function respuestaProducto(consulta, nuevos, usados) {
   return ["sin_resultado", `No encontré ${nombre}. Podés ver todo el catálogo en ${WEB}.\n\n${AVISO_PERSONA}`];
 }
 
+function datosProducto(consulta, resultado) {
+  const modelo = [nombreConsulta(consulta), consulta.capacidad?.toUpperCase(), consulta.color]
+    .filter(Boolean).join(" ");
+  let stock = "Sí";
+  if (resultado.tipo !== "producto") stock = "No";
+  else if (resultado.respuesta.startsWith("De ")) stock = "Parcial";
+  return { modelo, stock };
+}
+
 function esIphone(fila) {
   return fila.categoria === "iPhone" && /^\d/.test(String(fila.modelo).trim());
 }
@@ -349,6 +361,8 @@ function nombreConsulta(consulta) {
   if (consulta.iphone) return nombreIphone(consulta.iphone);
   if (consulta.categoria) return consulta.categoria;
   if (consulta.pideUsados) return "usados";
+  if (consulta.pideNuevos) return "nuevos";
+  if (consulta.pideIphone) return "iPhone";
   return "ese producto";
 }
 
@@ -466,4 +480,108 @@ export function estaAbierto(fecha) {
   if (dia >= 1 && dia <= 5) return minutos >= 570 && minutos < 1110;
   if (dia === 6) return minutos >= 660 && minutos < 840;
   return false;
+}
+
+const MOTIVOS = {
+  saludo: "Saludo",
+  producto: "Consulta de producto",
+  sin_resultado: "Consulta de producto",
+  pago: "Formas de pago",
+  dolar: "Cotización del dólar",
+  ubicacion: "Ubicación",
+  horario: "Horario",
+  garantia: "Garantía",
+  canje: "Canje",
+  canje_recibido: "Datos de canje",
+  pase_informacion: "Pase de información",
+  comprar: "Compra",
+  humano: "Pide persona",
+  cierre: "Agradecimiento",
+  error: "Error del servicio",
+};
+
+// Guarda una fila por consulta. No guarda el número del cliente. Si falla o tarda
+// más de 2 segundos, el cliente igual recibe su respuesta.
+async function registrarConsulta(respuesta, registro, mensaje) {
+  try {
+    await Promise.race([
+      escribirRegistro(respuesta, registro, mensaje),
+      new Promise((resolve) => setTimeout(resolve, 2000)),
+    ]);
+  } catch (e) {
+    console.error("bot-consulta registro error:", e);
+  }
+}
+
+async function escribirRegistro(respuesta, registro, mensaje) {
+  const noEntendido = respuesta.tipo === "sin_resultado" && !registro;
+  const motivo = noEntendido ? "No entendido" : MOTIVOS[respuesta.tipo] || "Otro";
+  const fila = [
+    ...fechaHoraArgentina(new Date()),
+    motivo,
+    registro?.modelo || "",
+    registro?.stock || "",
+    respuesta.deriva === "si" ? "Sí" : "No",
+    respuesta.abierto === "si" ? "Abierto" : "Cerrado",
+    noEntendido ? mensaje.slice(0, 120) : "",
+  ];
+  const token = await tokenEscritura();
+  const rango = encodeURIComponent("Estadisticas_Bot!A:H");
+  const url = `https://sheets.googleapis.com/v4/spreadsheets/${process.env.SHEET_ID}/values/${rango}:append?valueInputOption=RAW`;
+  const r = await fetch(url, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ values: [fila] }),
+  });
+  if (!r.ok) throw new Error(`Google Sheets respondió ${r.status}: ${await r.text()}`);
+}
+
+// Devuelve fecha y hora como números de planilla, en horario de Argentina (UTC-3).
+export function fechaHoraArgentina(fecha) {
+  const local = fecha.getTime() - 3 * 60 * 60 * 1000;
+  const dias = local / 86400000 + 25569;
+  const fechaPlanilla = Math.floor(dias);
+  return [fechaPlanilla, Number((dias - fechaPlanilla).toFixed(6))];
+}
+
+let tokenGuardado = { valor: "", vence: 0 };
+
+async function tokenEscritura() {
+  if (tokenGuardado.valor && Date.now() < tokenGuardado.vence) return tokenGuardado.valor;
+  const cuenta = JSON.parse(process.env.GOOGLE_SA_KEY);
+  const ahora = Math.floor(Date.now() / 1000);
+  const claim = {
+    iss: cuenta.client_email,
+    scope: "https://www.googleapis.com/auth/spreadsheets",
+    aud: "https://oauth2.googleapis.com/token",
+    exp: ahora + 3600,
+    iat: ahora,
+  };
+  const sinFirma = `${base64url(JSON.stringify({ alg: "RS256", typ: "JWT" }))}.${base64url(JSON.stringify(claim))}`;
+  const clave = await importarClave(cuenta.private_key);
+  const firma = await crypto.subtle.sign({ name: "RSASSA-PKCS1-v1_5" }, clave, new TextEncoder().encode(sinFirma));
+  const r = await fetch("https://oauth2.googleapis.com/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: `grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${sinFirma}.${base64url(firma)}`,
+  });
+  const data = await r.json();
+  if (!data.access_token) throw new Error("No se pudo obtener el token de Google");
+  tokenGuardado = { valor: data.access_token, vence: Date.now() + 50 * 60 * 1000 };
+  return data.access_token;
+}
+
+function base64url(dato) {
+  return Buffer.from(dato).toString("base64url");
+}
+
+async function importarClave(pem) {
+  const contenido = pem.replace(/-----(BEGIN|END) PRIVATE KEY-----/g, "").replace(/\s/g, "");
+  return crypto.subtle.importKey(
+    "pkcs8",
+    Buffer.from(contenido, "base64"),
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
 }
