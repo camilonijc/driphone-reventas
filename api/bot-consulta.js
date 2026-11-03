@@ -6,7 +6,8 @@
 //                pago | dolar | ubicacion | horario | garantia | producto |
 //                sin_resultado | cierre
 //
-// ManyChat manda q="canje recibido" cuando el cliente ya pasó los datos de su equipo.
+// ManyChat también manda prev con el tipo anterior: si era "canje", el mensaje actual
+// son los datos del equipo del cliente.
 //   deriva    -> "si" cuando hay que asignarle la charla a JC
 //   abierto   -> "si" | "no", según el horario del local
 //
@@ -95,9 +96,10 @@ export default async function handler(req, res) {
   }
 
   const q = String(req.body?.q ?? req.query?.q ?? "").slice(0, 300);
+  const previo = String(req.body?.prev ?? req.query?.prev ?? "");
 
   try {
-    return res.status(200).json(await responder(q));
+    return res.status(200).json(await responder(q, new Date(), previo));
   } catch (e) {
     console.error("bot-consulta error:", e);
     return res.status(200).json(salida(
@@ -107,7 +109,7 @@ export default async function handler(req, res) {
   }
 }
 
-export async function responder(q, ahora = new Date()) {
+export async function responder(q, ahora = new Date(), previo = "") {
   const texto = normalizar(q);
   const abierto = estaAbierto(ahora);
 
@@ -117,7 +119,8 @@ export async function responder(q, ahora = new Date()) {
     return salida("humano", mensajeDerivacion(abierto, "Te paso con una persona del equipo."), abierto, true);
   }
 
-  if (texto === "canje recibido") {
+  // Si el mensaje anterior pidió los datos del canje, este mensaje son esos datos.
+  if (previo === "canje" || texto === "canje recibido") {
     return salida("canje_recibido", `${TURNO_CANJE}\n\n${siguePersona(abierto)}`, abierto, true);
   }
 
