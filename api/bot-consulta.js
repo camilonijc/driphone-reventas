@@ -84,7 +84,7 @@ export default async function handler(req, res) {
 
   try {
     const { registro, ...respuesta } = await responder(q, new Date(), previo);
-    if (req.method === "POST") await registrarConsulta(respuesta, registro, q);
+    if (req.method === "POST") res.setHeader("X-Bot-Registro", await registrarConsulta(respuesta, registro, q));
     return res.status(200).json(respuesta);
   } catch (e) {
     console.error("bot-consulta error:", e);
@@ -504,12 +504,13 @@ const MOTIVOS = {
 // más de 2 segundos, el cliente igual recibe su respuesta.
 async function registrarConsulta(respuesta, registro, mensaje) {
   try {
-    await Promise.race([
-      escribirRegistro(respuesta, registro, mensaje),
-      new Promise((resolve) => setTimeout(resolve, 2000)),
+    return await Promise.race([
+      escribirRegistro(respuesta, registro, mensaje).then(() => "ok"),
+      new Promise((resolve) => setTimeout(() => resolve("timeout"), 2000)),
     ]);
   } catch (e) {
     console.error("bot-consulta registro error:", e);
+    return encodeURIComponent(String(e.message).slice(0, 180));
   }
 }
 
