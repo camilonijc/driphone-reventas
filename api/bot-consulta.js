@@ -12,7 +12,8 @@
 //   abierto   -> "si" | "no", según el horario del local
 //   enviar    -> "no" cuando no hay que mandar nada (foto, audio o mensaje repetido)
 //   modelo    -> contexto del último producto consultado (ManyChat lo devuelve en "modelo")
-//   menu      -> "si" cuando conviene mostrar los botones Productos nuevos / iPhone usados / Plan canje
+//   menu      -> "si": botones Productos nuevos / iPhone usados / Plan canje
+//                "categorias": botones iPhone / iPad / Mac / Apple Watch / AirPods / Samsung
 //   ultimo    -> el mensaje actual (ManyChat lo devuelve en "ultimo" para detectar repetidos)
 //
 // Solo informa precio público en USD. Nunca lee ni devuelve precios de reventa,
@@ -115,7 +116,7 @@ export async function responder(q, ahora = new Date(), previo = "", extra = {}) 
   return {
     ...r,
     enviar: r.enviar || "si",
-    menu: r.enviar !== "no" && (r.tipo === "saludo" || (r.tipo === "sin_resultado" && !r.registro)) ? "si" : "no",
+    menu: r.menu || (r.enviar !== "no" && (r.tipo === "saludo" || (r.tipo === "sin_resultado" && !r.registro)) ? "si" : "no"),
     modelo: r.modelo || extra.modelo || "-",
     ultimo: q,
   };
@@ -224,7 +225,8 @@ async function responderSinContexto(q, ahora, previo, extra) {
     const mensaje = consulta.pideIphone
       ? "¡Dale! ¿Qué modelo buscás? Por ejemplo: *iPhone 17 Pro 256GB*."
       : "¡Dale! ¿Qué producto buscás? Tenemos iPhone, iPad, Mac, Apple Watch, AirPods y Samsung. Escribime el modelo, por ejemplo: *iPhone 17 Pro 256GB* o *Apple Watch Series 11*.";
-    return salida("pide_modelo", mensaje, abierto);
+    // Sin modelo ni categoría: ManyChat muestra los botones de categorías.
+    return { ...salida("pide_modelo", mensaje, abierto), menu: consulta.pideIphone ? "no" : "categorias" };
   }
 
   const { nuevos, usados } = await leerStock();
