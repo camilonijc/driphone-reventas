@@ -131,8 +131,13 @@ async function registrarWebhook(url) {
   const existentes = await calendly(
     `/webhook_subscriptions?organization=${encodeURIComponent(org)}&user=${encodeURIComponent(yo.uri)}&scope=user`,
   );
-  const ya = (existentes.collection || []).find((w) => w.callback_url === url);
-  if (ya) return { estado: "ya estaba registrado", url, creado: ya.created_at };
+  // Si ya existía, se borra y se crea de nuevo: la clave de firma depende del token
+  // actual, y si el token cambió la vieja ya no coincide.
+  const viejos = (existentes.collection || []).filter((w) => w.callback_url === url);
+  for (const w of viejos) {
+    const r = await fetch(w.uri, { method: "DELETE", headers: { Authorization: `Bearer ${process.env.CALENDLY_TOKEN}` } });
+    if (!r.ok && r.status !== 404) throw new Error(`No se pudo borrar el webhook anterior (${r.status})`);
+  }
 
   await calendly("/webhook_subscriptions", {
     method: "POST",
@@ -145,5 +150,5 @@ async function registrarWebhook(url) {
       signing_key: claveDeFirma(),
     }),
   });
-  return { estado: "registrado", url };
+  return { estado: viejos.length ? "re-registrado" : "registrado", url };
 }
