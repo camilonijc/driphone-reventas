@@ -10,6 +10,9 @@
 // son los datos del equipo del cliente.
 //   deriva    -> "si" cuando hay que asignarle la charla a JC
 //   abierto   -> "si" | "no", según el horario del local
+//   enviar    -> "no" cuando no hay que mandar nada (foto, audio o mensaje repetido)
+//   modelo    -> contexto del último producto consultado (ManyChat lo devuelve en "modelo")
+//   ultimo    -> el mensaje actual (ManyChat lo devuelve en "ultimo" para detectar repetidos)
 //
 // Solo informa precio público en USD. Nunca lee ni devuelve precios de reventa,
 // costos ni valores en pesos.
@@ -17,6 +20,7 @@
 const WEB = "www.iphoneneuquen.com";
 const AVISO_PERSONA = "Si preferís, escribí *persona* y te atiende alguien del equipo.";
 const MAX_LINEAS = 8;
+const TIMBRE = "Tocá el timbre negro por favor, ya te van a atender.";
 
 const TURNO_COMPRA = `Para sacar tu turno podés hacerlo desde este link:
 https://calendly.com/driphoneneuquen/compra-directa
@@ -79,11 +83,14 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const q = String(req.body?.q ?? req.query?.q ?? "").slice(0, 300);
-  const previo = String(req.body?.prev ?? req.query?.prev ?? "");
+  const campo = (nombre) => limpiarCampo(req.body?.[nombre] ?? req.query?.[nombre]);
+  const q = campo("q").slice(0, 300);
+  const previo = campo("prev");
+  const ultimo = campo("ultimo");
+  const modeloPrevio = campo("modelo");
 
   try {
-    const { registro, ...respuesta } = await responder(q, new Date(), previo);
+    const { registro, ...respuesta } = await responder(q, new Date(), previo, { ultimo, modelo: modeloPrevio });
     if (req.method === "POST") await registrarConsulta(respuesta, registro, q);
     return res.status(200).json(respuesta);
   } catch (e) {
@@ -95,13 +102,37 @@ export default async function handler(req, res) {
   }
 }
 
-export async function responder(q, ahora = new Date(), previo = "") {
+// ManyChat deja el texto "{{campo}}" cuando el campo está vacío.
+function limpiarCampo(valor) {
+  const texto = String(valor ?? "").trim();
+  return /^\{\{.*\}\}$/.test(texto) ? "" : texto;
+}
+
+export async function responder(q, ahora = new Date(), previo = "", extra = {}) {
+  const r = await responderSinContexto(q, ahora, previo, extra);
+  return {
+    ...r,
+    enviar: r.enviar || "si",
+    modelo: r.modelo || extra.modelo || "-",
+    ultimo: q,
+  };
+}
+
+async function responderSinContexto(q, ahora, previo, extra) {
   const texto = normalizar(q);
   const abierto = estaAbierto(ahora);
 
-  if (!texto) return salida("saludo", saludo(), abierto);
+  // Sin texto o igual al mensaje anterior: ManyChat repite el último texto cuando el
+  // cliente manda fotos, audios o stickers. No se contesta para no repetir respuestas.
+  if (!texto || texto === normalizar(extra.ultimo)) {
+    return { ...salida(previo || "sin_texto", "", abierto), enviar: "no" };
+  }
 
-  if (/\b(persona|humano|humana|asesor|asesora|vendedor|vendedora)\b/.test(texto)) {
+  if (texto.length <= 60 && /\b(llegue|ya llegue|ya estoy|estoy abajo|abajo|estoy afuera|aca afuera|afuera|en la puerta|estoy aca|aca estoy|estoy en el local|estoy en la oficina)\b/.test(texto)) {
+    return salida("llegada", TIMBRE, abierto);
+  }
+
+  if (/\b(person\w*|perosna|presona|pesona|humano|humana|asesor\w*|vendedor\w*|operador\w*|juan|atienda|atiende alguien|hablar con alguien|hablo con|sos (un )?bot|sos juan|atendiendo vos)\b/.test(texto)) {
     return salida("humano", mensajeDerivacion(abierto, "Te paso con una persona del equipo."), abierto, true);
   }
 
@@ -124,6 +155,10 @@ export async function responder(q, ahora = new Date(), previo = "") {
     );
   }
 
+  if (/\b(cambiar(le)? (la |el )?(pantalla|bateria|modulo|camara|vidrio|tapa|pin)|cambio de (pantalla|bateria|modulo|camara)|reparar|reparan|reparacion|reparaciones|arreglar|arreglan|arreglo|se (me )?rompio|service|servicio tecnico|tecnico|no carga|no prende|se mojo)\b/.test(texto)) {
+    return salida("reparacion", mensajeDerivacion(abierto, "Por reparaciones o service te responde una persona del equipo."), abierto, true);
+  }
+
   if (/\b(quiero (comprar|comprarlo|llevarlo|reservar|reservarlo|ese|este)|lo quiero|lo compro|me lo llevo|comprar|reservar|reserva|sena|senar|turno|turnos)\b/.test(texto)) {
     return salida("comprar", `${TURNO_COMPRA}\n\n${siguePersona(abierto)}`, abierto, true);
   }
@@ -134,7 +169,7 @@ export async function responder(q, ahora = new Date(), previo = "") {
 
   const preguntaPago = /\b(cuotas?|tarjeta|tarjetas|financiacion|financiar|financian|mercado ?pago|credito|debito|formas? de pago|medios? de pago|como pago|se puede pagar)\b/.test(texto);
   const mencionaPago = /\b(efectivo|transferencia|crypto|cripto|usdt)\b/.test(texto);
-  const consulta = interpretarProducto(texto);
+  const consulta = completarConContexto(interpretarProducto(texto), leerContexto(extra.modelo), texto);
 
   if (preguntaPago || (mencionaPago && !consulta.hayPedido)) {
     return salida(
@@ -170,7 +205,7 @@ export async function responder(q, ahora = new Date(), previo = "") {
     if (/\b(gracias|genial|perfecto|dale|ok|okey)\b/.test(texto)) {
       return salida("cierre", "¡De nada! Si necesitás algo más, escribime.", abierto);
     }
-    if (/\b(hola|buenas|buen dia|buenos dias|buenas tardes|buenas noches|hey|que tal)\b/.test(texto)) {
+    if (/\b(hol+a+s?|buenas|buen dia|buenos dias|buenas tardes|buenas noches|hey|que tal|como va|como andas|como estas|como esta|todo bien|una consulta|consulta|consultita|consultar|amigo|amiga|querido|querida|estas)\b/.test(texto)) {
       return salida("saludo", saludo(), abierto);
     }
     return salida(
@@ -182,7 +217,7 @@ export async function responder(q, ahora = new Date(), previo = "") {
 
   const { nuevos, usados } = await leerStock();
   const resultado = salida(...respuestaProducto(consulta, nuevos, usados), abierto);
-  return { ...resultado, registro: datosProducto(consulta, resultado) };
+  return { ...resultado, modelo: contextoDe(consulta), registro: datosProducto(consulta, resultado) };
 }
 
 function salida(tipo, respuesta, abierto = false, deriva = false) {
@@ -267,7 +302,7 @@ function interpretarProducto(texto) {
   const categoria = CATEGORIAS.find((c) => c.regex.test(texto))?.nombre || null;
   const iphone = categoria ? null : claveIphone(texto);
   const pideIphone = /\biphones?\b/.test(texto);
-  const pideUsados = /\b(usado|usados|usada|segunda mano)\b/.test(texto);
+  const pideUsados = /\b(usado|usados|usada|segunda mano)\b/.test(texto) || Boolean(extraerBateria(texto));
   const pideNuevos = /\b(nuevo|nuevos|nueva|sellado|sellados)\b/.test(texto);
 
   return {
@@ -279,12 +314,72 @@ function interpretarProducto(texto) {
     pideNuevos,
     color: extraerColor(texto),
     capacidad: extraerCapacidad(texto),
+    bateria: extraerBateria(texto),
     hayPedido: Boolean(categoria || iphone || pideIphone || pideUsados || pideNuevos),
   };
 }
 
+// "90%", "batería 90" o "90 de batería" -> 90 (se buscan usados con esa batería o más).
+function extraerBateria(texto) {
+  const m = texto.match(/\b(\d{2,3})\s*%|\bbateria (?:de |del |al )?(\d{2,3})\b|\b(\d{2,3}) (?:de |%)?bateria\b/);
+  const n = m ? Number(m[1] || m[2] || m[3]) : 0;
+  return n >= 70 && n <= 100 ? n : null;
+}
+
+// Contexto del último producto consultado, guardado en ManyChat como texto corto.
+function contextoDe(c) {
+  const partes = [];
+  if (c.iphone) partes.push(`i=${c.iphone}`);
+  if (c.categoria) partes.push(`c=${c.categoria}`);
+  if (c.pideIphone) partes.push("p=1");
+  if (c.pideUsados) partes.push("u=1");
+  if (c.pideNuevos) partes.push("n=1");
+  if (c.capacidad) partes.push(`cap=${c.capacidad}`);
+  if (c.color) partes.push(`col=${c.color}`);
+  if (c.bateria) partes.push(`bat=${c.bateria}`);
+  return partes.join(";") || "-";
+}
+
+function leerContexto(texto) {
+  const datos = Object.fromEntries(String(texto || "").split(";")
+    .map((p) => p.split("=")).filter((p) => p.length === 2));
+  if (!datos.i && !datos.c && !datos.p && !datos.u && !datos.n) return null;
+  return datos;
+}
+
+// "En color azul", "¿ese es pro?" o "con más de 90%" después de consultar un modelo:
+// se completa con el modelo anterior.
+function completarConContexto(consulta, ctx, texto) {
+  if (!ctx) return consulta;
+  const variante = texto.match(/\b(pro max|promax|pro|plus|max)\b/)?.[1];
+  if (consulta.hayPedido) {
+    return consulta.bateria && !consulta.iphone && !consulta.categoria && ctx.i
+      ? { ...consulta, iphone: ctx.i, pideUsados: true }
+      : consulta;
+  }
+  if (!consulta.color && !consulta.capacidad && !consulta.bateria && !(variante && ctx.i)) return consulta;
+
+  let iphone = ctx.i || null;
+  if (iphone && variante) {
+    const base = iphone.match(/^\d+/)[0];
+    iphone = base + ({ "pro max": "promax", max: "promax", promax: "promax", pro: "pro", plus: "plus" }[variante]);
+  }
+  return {
+    ...consulta,
+    iphone,
+    categoria: ctx.c || null,
+    pideIphone: ctx.p === "1",
+    pideUsados: ctx.u === "1" || Boolean(consulta.bateria),
+    pideNuevos: ctx.n === "1" && !consulta.bateria,
+    capacidad: consulta.capacidad || ctx.cap || null,
+    color: consulta.color || ctx.col || null,
+    bateria: consulta.bateria || (ctx.bat ? Number(ctx.bat) : null),
+    hayPedido: true,
+  };
+}
+
 function respuestaProducto(consulta, nuevos, usados) {
-  let candidatosNuevos = consulta.pideUsados ? [] : nuevos;
+  let candidatosNuevos = consulta.pideUsados || consulta.bateria ? [] : nuevos;
   let candidatosUsados = consulta.pideNuevos || consulta.categoria ? [] : usados;
 
   if (consulta.iphone) {
@@ -297,7 +392,8 @@ function respuestaProducto(consulta, nuevos, usados) {
   }
 
   const elegidos = [...candidatosNuevos, ...candidatosUsados];
-  const conTodo = elegidos.filter((f) => coincideCapacidad(f, consulta) && coincideColor(f, consulta));
+  const conTodo = elegidos.filter((f) => coincideCapacidad(f, consulta) && coincideColor(f, consulta)
+    && coincideBateria(f, consulta));
   const disponiblesExactos = conTodo.filter((f) => f.disponible);
   const nombre = nombreConsulta(consulta);
 
@@ -351,6 +447,10 @@ function filtrarCategoria(filas, consulta) {
 
 function coincideCapacidad(fila, consulta) {
   return !consulta.capacidad || capacidadDeFila(fila) === consulta.capacidad;
+}
+
+function coincideBateria(fila, consulta) {
+  return !consulta.bateria || (parseInt(String(fila.bateria), 10) || 0) >= consulta.bateria;
 }
 
 function coincideColor(fila, consulta) {
@@ -498,6 +598,8 @@ const MOTIVOS = {
   humano: "Pide persona",
   cierre: "Agradecimiento",
   error: "Error del servicio",
+  llegada: "Llegada al local",
+  reparacion: "Reparación",
 };
 
 // Guarda una fila por consulta en la planilla, mediante el Apps Script publicado en
@@ -516,8 +618,10 @@ async function registrarConsulta(respuesta, registro, mensaje) {
 }
 
 async function escribirRegistro(respuesta, registro, mensaje) {
-  const noEntendido = respuesta.tipo === "sin_resultado" && !registro;
-  const motivo = noEntendido ? "No entendido" : MOTIVOS[respuesta.tipo] || "Otro";
+  const noEntendido = respuesta.tipo === "sin_resultado" && !registro && respuesta.enviar !== "no";
+  const motivo = respuesta.enviar === "no"
+    ? "Sin texto o repetido"
+    : noEntendido ? "No entendido" : MOTIVOS[respuesta.tipo] || "Otro";
   const fila = [
     ...fechaHoraArgentina(new Date()),
     motivo,
