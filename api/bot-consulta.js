@@ -1,3 +1,5 @@
+import { guardarCampo, hayManychat, normalizarTelefono, ponerEtiqueta } from "./_manychat.js";
+
 // api/bot-consulta.js — Respuestas del bot de WhatsApp (ManyChat) de Dr.iPhone.
 //
 // ManyChat hace POST con { "q": "<mensaje del cliente>" } y usa de la respuesta:
@@ -25,8 +27,10 @@ const MAX_LINEAS = 8;
 const OPCIONES_MENU = `Elegí *Productos nuevos*, *iPhone usados* o *Plan canje*, o escribime directamente qué buscás.\n\n${AVISO_PERSONA}`;
 const TIMBRE = "Tocá el timbre negro por favor, ya te van a atender.";
 
-const TURNO_COMPRA = `Para sacar tu turno podés hacerlo desde este link:
-https://calendly.com/driphoneneuquen/compra-directa
+// El id del contacto va en el link para que Calendly lo devuelva al sacar el turno
+// (api/calendly-webhook.js) y se le ponga la etiqueta "Turno compra".
+const turnoCompra = (contacto) => `Para sacar tu turno podés hacerlo desde este link:
+https://calendly.com/driphoneneuquen/compra-directa${contacto ? `?utm_content=${contacto}` : ""}
 
 En caso de encontrarse ocupado el horario, consultar para un sobreturno. Normalmente no hay inconvenientes.`;
 
@@ -91,10 +95,19 @@ export default async function handler(req, res) {
   const previo = campo("prev");
   const ultimo = campo("ultimo");
   const modeloPrevio = campo("modelo");
+  const contacto = campo("id").match(/^\d+$/)?.[0] || "";
+  const telefono = normalizarTelefono(campo("tel"));
 
   try {
-    const { registro, ...respuesta } = await responder(q, new Date(), previo, { ultimo, modelo: modeloPrevio });
-    if (req.method === "POST") await registrarConsulta(respuesta, registro, q);
+    const { registro, ...respuesta } = await responder(q, new Date(), previo, { ultimo, modelo: modeloPrevio, contacto });
+    // ManyChat guarda tel en bot_tel: sirve para encontrar al contacto cuando saca turno.
+    if (telefono) respuesta.tel = telefono;
+    if (req.method === "POST") {
+      await Promise.all([
+        registrarConsulta(respuesta, registro, q),
+        etiquetarAvisar(contacto, respuesta, registro),
+      ]);
+    }
     return res.status(200).json(respuesta);
   } catch (e) {
     console.error("bot-consulta error:", e);
@@ -164,7 +177,7 @@ async function responderSinContexto(q, ahora, previo, extra) {
   }
 
   if (/\b(quiero (comprar|comprarlo|llevarlo|reservar|reservarlo|ese|este)|lo quiero|lo compro|me lo llevo|comprar|reservar|reserva|sena|senar|turno|turnos)\b/.test(texto)) {
-    return salida("comprar", `${TURNO_COMPRA}\n\n${siguePersona(abierto)}`, abierto, true);
+    return salida("comprar", `${turnoCompra(extra.contacto)}\n\n${siguePersona(abierto)}`, abierto, true);
   }
 
   if (/\b(cotizacion|dolar|tipo de cambio)\b/.test(texto)) {
@@ -616,6 +629,22 @@ const MOTIVOS = {
   pide_modelo: "Consulta de producto",
   reparacion: "Reparación",
 };
+
+// Si pidió un producto que no está (o no en esa variante), etiqueta "Avisar" y guarda qué buscó.
+async function etiquetarAvisar(contacto, respuesta, registro) {
+  if (!contacto || !hayManychat() || !registro || registro.stock === "Sí") return;
+  try {
+    await Promise.race([
+      Promise.all([
+        ponerEtiqueta(contacto, "Avisar"),
+        guardarCampo(contacto, "bot_avisar", registro.modelo),
+      ]),
+      new Promise((resolve) => setTimeout(resolve, 3000)),
+    ]);
+  } catch (e) {
+    console.error("bot-consulta avisar error:", e);
+  }
+}
 
 // Guarda una fila por consulta en la planilla, mediante el Apps Script publicado en
 // BOT_LOG_URL. No guarda el número del cliente. Si falla o tarda más de 3 segundos,
