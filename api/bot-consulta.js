@@ -12,6 +12,7 @@
 //   abierto   -> "si" | "no", según el horario del local
 //   enviar    -> "no" cuando no hay que mandar nada (foto, audio o mensaje repetido)
 //   modelo    -> contexto del último producto consultado (ManyChat lo devuelve en "modelo")
+//   menu      -> "si" cuando conviene mostrar los botones Productos nuevos / iPhone usados / Plan canje
 //   ultimo    -> el mensaje actual (ManyChat lo devuelve en "ultimo" para detectar repetidos)
 //
 // Solo informa precio público en USD. Nunca lee ni devuelve precios de reventa,
@@ -20,6 +21,7 @@
 const WEB = "www.iphoneneuquen.com";
 const AVISO_PERSONA = "Si preferís, escribí *persona* y te atiende alguien del equipo.";
 const MAX_LINEAS = 8;
+const OPCIONES_MENU = `Elegí *Productos nuevos*, *iPhone usados* o *Plan canje*, o escribime directamente qué buscás.\n\n${AVISO_PERSONA}`;
 const TIMBRE = "Tocá el timbre negro por favor, ya te van a atender.";
 
 const TURNO_COMPRA = `Para sacar tu turno podés hacerlo desde este link:
@@ -113,6 +115,7 @@ export async function responder(q, ahora = new Date(), previo = "", extra = {}) 
   return {
     ...r,
     enviar: r.enviar || "si",
+    menu: r.enviar !== "no" && (r.tipo === "saludo" || (r.tipo === "sin_resultado" && !r.registro)) ? "si" : "no",
     modelo: r.modelo || extra.modelo || "-",
     ultimo: q,
   };
@@ -210,9 +213,18 @@ async function responderSinContexto(q, ahora, previo, extra) {
     }
     return salida(
       "sin_resultado",
-      `No te entendí bien. Decime qué modelo buscás, por ejemplo "iPhone 17 256GB".\n\n${AVISO_PERSONA}`,
+      `No te entendí bien. ¿Qué estás buscando?\n\n${OPCIONES_MENU}`,
       abierto,
     );
+  }
+
+  // "Productos nuevos" o "iPhone nuevo" sin modelo (o el botón del menú): se pregunta cuál.
+  if (!consulta.iphone && !consulta.categoria && !consulta.pideUsados && !consulta.bateria
+    && !consulta.capacidad && !consulta.color && (consulta.pideNuevos || consulta.pideIphone)) {
+    const mensaje = consulta.pideIphone
+      ? "¡Dale! ¿Qué modelo buscás? Por ejemplo: *iPhone 17 Pro 256GB*."
+      : "¡Dale! ¿Qué producto buscás? Tenemos iPhone, iPad, Mac, Apple Watch, AirPods y Samsung. Escribime el modelo, por ejemplo: *iPhone 17 Pro 256GB* o *Apple Watch Series 11*.";
+    return salida("pide_modelo", mensaje, abierto);
   }
 
   const { nuevos, usados } = await leerStock();
@@ -225,7 +237,7 @@ function salida(tipo, respuesta, abierto = false, deriva = false) {
 }
 
 function saludo() {
-  return `¡Hola! Soy el asistente virtual de Dr.iPhone. Decime qué modelo buscás y te paso precio y disponibilidad.\n\n${AVISO_PERSONA}`;
+  return `¡Hola! Soy el asistente virtual de Dr.iPhone. ¿Qué estás buscando?\n\n${OPCIONES_MENU}`;
 }
 
 function esConsultaCanje(texto) {
@@ -599,6 +611,7 @@ const MOTIVOS = {
   cierre: "Agradecimiento",
   error: "Error del servicio",
   llegada: "Llegada al local",
+  pide_modelo: "Consulta de producto",
   reparacion: "Reparación",
 };
 
